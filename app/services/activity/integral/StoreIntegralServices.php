@@ -107,6 +107,7 @@ class StoreIntegralServices extends BaseServices
 		$data['integral'] = $integral_data ? (int)min($integral_data) : 0;
         $data['price'] = array_search($data['integral'], $integral_data);
         $data['quota'] = $data['quota_show'] = array_sum(array_column($detail, 'quota'));
+        $data['is_kictchen'] = $productInfo['is_kictchen'];
         if ($data['quota'] > $storeProductServices->value(['id' => $data['product_id']], 'stock')) {
             throw new ValidateException('限量不能超过商品库存');
         }

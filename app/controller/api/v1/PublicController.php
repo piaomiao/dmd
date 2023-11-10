@@ -10,7 +10,7 @@
 // +----------------------------------------------------------------------
 namespace app\controller\api\v1;
 
-
+use app\model\store\SystemStoreShare;
 use app\services\activity\combination\StorePinkServices;
 use app\services\diy\DiyServices;
 use app\services\message\service\StoreServiceServices;
@@ -32,9 +32,14 @@ use app\webscoket\SocketPush;
 use Joypack\Tencent\Map\Bundle\Location;
 use Joypack\Tencent\Map\Bundle\LocationOption;
 use app\Request;
+use app\services\message\NoticeService;
+use app\services\order\StoreOrderCartInfoServices;
+use app\services\order\StoreOrderServices;
+use app\services\store\SystemStoreShareServices;
 use crmeb\services\CacheService;
 use crmeb\services\UploadService;
 use crmeb\basic\BaseController;
+use think\facade\Db;
 
 /**
  * 公共类
@@ -50,38 +55,38 @@ class PublicController extends BaseController
      */
     public function index(Request $request)
     {
-        $banner = sys_data('routine_home_banner') ?: [];// 首页banner图
-        $menus = sys_data('routine_home_menus') ?: [];// 首页按钮
-        $roll = sys_data('routine_home_roll_news') ?: [];// 首页滚动新闻
-        $activity = sys_data('routine_home_activity', 3) ?: [];// 首页活动区域图片
-        $explosive_money = sys_data('index_categy_images') ?: [];// 首页超值爆款
+        $banner = sys_data('routine_home_banner') ?: []; // 首页banner图
+        $menus = sys_data('routine_home_menus') ?: []; // 首页按钮
+        $roll = sys_data('routine_home_roll_news') ?: []; // 首页滚动新闻
+        $activity = sys_data('routine_home_activity', 3) ?: []; // 首页活动区域图片
+        $explosive_money = sys_data('index_categy_images') ?: []; // 首页超值爆款
         $site_name = sys_config('site_name');
         $routine_index_page = sys_data('routine_index_page');
-        $info['fastInfo'] = $routine_index_page[0]['fast_info'] ?? '';// 快速选择简介
-        $info['bastInfo'] = $routine_index_page[0]['bast_info'] ?? '';// 精品推荐简介
-        $info['firstInfo'] = $routine_index_page[0]['first_info'] ?? '';// 首发新品简介
-        $info['salesInfo'] = $routine_index_page[0]['sales_info'] ?? '';// 促销单品简介
-        $logoUrl = sys_config('routine_index_logo');// 促销单品简介
+        $info['fastInfo'] = $routine_index_page[0]['fast_info'] ?? ''; // 快速选择简介
+        $info['bastInfo'] = $routine_index_page[0]['bast_info'] ?? ''; // 精品推荐简介
+        $info['firstInfo'] = $routine_index_page[0]['first_info'] ?? ''; // 首发新品简介
+        $info['salesInfo'] = $routine_index_page[0]['sales_info'] ?? ''; // 促销单品简介
+        $logoUrl = sys_config('routine_index_logo'); // 促销单品简介
         if (strstr($logoUrl, 'http') === false && $logoUrl) {
             $logoUrl = sys_config('site_url') . $logoUrl;
         }
         $logoUrl = str_replace('\\', '/', $logoUrl);
-        $fastNumber = (int)sys_config('fast_number', 0);// 快速选择分类个数
-        $bastNumber = (int)sys_config('bast_number', 0);// 精品推荐个数
-        $firstNumber = (int)sys_config('first_number', 0);// 首发新品个数
-        $promotionNumber = (int)sys_config('promotion_number', 0);// 首发新品个数
+        $fastNumber = (int)sys_config('fast_number', 0); // 快速选择分类个数
+        $bastNumber = (int)sys_config('bast_number', 0); // 精品推荐个数
+        $firstNumber = (int)sys_config('first_number', 0); // 首发新品个数
+        $promotionNumber = (int)sys_config('promotion_number', 0); // 首发新品个数
 
         /** @var StoreProductCategoryServices $categoryService */
         $categoryService = app()->make(StoreProductCategoryServices::class);
-        $info['fastList'] = $fastNumber ? $categoryService->byIndexList($fastNumber, 'id,cate_name,pid,pic') : [];// 快速选择分类个数
+        $info['fastList'] = $fastNumber ? $categoryService->byIndexList($fastNumber, 'id,cate_name,pid,pic') : []; // 快速选择分类个数
         /** @var StoreProductServices $storeProductServices */
         $storeProductServices = app()->make(StoreProductServices::class);
-        $info['bastList'] = $bastNumber ? $storeProductServices->getRecommendProduct($request->uid(), 'is_best', $bastNumber) : [];// 精品推荐个数
-        $info['firstList'] = $firstNumber ? $storeProductServices->getRecommendProduct($request->uid(), 'is_new', $firstNumber) : [];// 首发新品个数
-        $info['bastBanner'] = sys_data('routine_home_bast_banner') ?? [];// 首页精品推荐图片
-        $benefit = $promotionNumber ? $storeProductServices->getRecommendProduct($request->uid(), 'is_benefit', $promotionNumber) : [];// 首页促销单品
-        $lovely = sys_data('routine_home_new_banner') ?: [];// 首发新品顶部图
-        $likeInfo = $storeProductServices->getRecommendProduct($request->uid(), 'is_hot', 3);// 热门榜单 猜你喜欢
+        $info['bastList'] = $bastNumber ? $storeProductServices->getRecommendProduct($request->uid(), 'is_best', $bastNumber) : []; // 精品推荐个数
+        $info['firstList'] = $firstNumber ? $storeProductServices->getRecommendProduct($request->uid(), 'is_new', $firstNumber) : []; // 首发新品个数
+        $info['bastBanner'] = sys_data('routine_home_bast_banner') ?? []; // 首页精品推荐图片
+        $benefit = $promotionNumber ? $storeProductServices->getRecommendProduct($request->uid(), 'is_benefit', $promotionNumber) : []; // 首页促销单品
+        $lovely = sys_data('routine_home_new_banner') ?: []; // 首发新品顶部图
+        $likeInfo = $storeProductServices->getRecommendProduct($request->uid(), 'is_hot', 3); // 热门榜单 猜你喜欢
         if ($request->uid()) {
             /** @var WechatUserServices $wechatUserService */
             $wechatUserService = app()->make(WechatUserServices::class);
@@ -170,6 +175,7 @@ class PublicController extends BaseController
             } catch (\Throwable $e) {
                 $isDelivery = false;
             }
+            $isShareholder = SystemStoreShare::where(['uid' => $uid])->count() > 0;
         }
         $auth = [];
         $auth['/pages/users/user_vip/index'] = !$vipOpen;
@@ -183,6 +189,8 @@ class PublicController extends BaseController
         $auth['/pages/admin/store/index'] = $uid == 0 || !$isStaff;
         $auth['/pages/admin/distribution/index'] = $uid == 0 || !$isDelivery;
         $auth['/pages/store_spread/index'] = $uid == 0 || !$isStaff;
+        $auth['/pages/shareholder/index'] = $uid == 0 || !$isShareholder;
+        $auth['/pages/admin/video/index'] = $uid == 0 || !$isStaff;
         foreach ($menusInfo as $key => &$value) {
             $value['pic'] = set_file_url($value['pic'] ?? '');
             $value['url'] = $value['url'] ?? '';
@@ -204,26 +212,26 @@ class PublicController extends BaseController
         $routine_contact_type = sys_config('routine_contact_type', 0);
         /** @var DiyServices $diyServices */
         $diyServices = app()->make(DiyServices::class);
-		$diy_data = $diyServices->cacheRemember('diy_data_member_3', function () use ($diyServices) {
-			$diy_data = $diyServices->get(['template_name' => 'member', 'type' => 3], ['value', 'status', 'order_status', 'my_banner_status', 'menu_status', 'service_status']);
-			$diy_data = $diy_data ? $diy_data->toArray() : [];
-			return $diy_data;
-		});
-		if ($diy_data) {
-			$diy_value = json_decode($diy_data['value'], true);
-			$new_value = [];
-			if (is_int($diy_value)) {
-				$new_value['status'] = $diy_value;
-				$new_value['vip_type'] = 1;
-				$new_value['newcomer_status'] = 1;
-				$new_value['newcomer_style'] = 1;
-			} else {
-				$new_value = $diy_value;
-			}
-			$diy_data = array_merge($diy_data, $new_value);
-			$diy_data['order_status'] = (int)$diy_data['order_status'];
-		}
-		unset($diy_data['value']);
+        $diy_data = $diyServices->cacheRemember('diy_data_member_3', function () use ($diyServices) {
+            $diy_data = $diyServices->get(['template_name' => 'member', 'type' => 3], ['value', 'status', 'order_status', 'my_banner_status', 'menu_status', 'service_status']);
+            $diy_data = $diy_data ? $diy_data->toArray() : [];
+            return $diy_data;
+        });
+        if ($diy_data) {
+            $diy_value = json_decode($diy_data['value'], true);
+            $new_value = [];
+            if (is_int($diy_value)) {
+                $new_value['status'] = $diy_value;
+                $new_value['vip_type'] = 1;
+                $new_value['newcomer_status'] = 1;
+                $new_value['newcomer_style'] = 1;
+            } else {
+                $new_value = $diy_value;
+            }
+            $diy_data = array_merge($diy_data, $new_value);
+            $diy_data['order_status'] = (int)$diy_data['order_status'];
+        }
+        unset($diy_data['value']);
         return app('json')->successful(['routine_my_menus' => array_merge($menusInfo), 'routine_my_banner' => $my_banner, 'routine_spread_banner' => $bannerInfo, 'routine_contact_type' => $routine_contact_type, 'diy_data' => $diy_data]);
     }
 
@@ -246,6 +254,40 @@ class PublicController extends BaseController
         return app('json')->successful($searchKeyword);
     }
 
+    /**
+     * 获取视频上传token
+     * @return mixed
+     * @throws \Exception
+     */
+    public function get_temp_keys()
+    {
+        $upload = UploadService::init();
+        $re = $upload->getTempKeys();
+        return $re ? app('json')->successful( 'ok',$re) : app('json')->fail($upload->getError());
+    }
+    /**
+     * 视频分片上传
+     * @return mixed
+     */
+    public function upload_video(Request $request, SystemAttachmentServices $services)
+    {
+        
+        $data = $request->postMore([
+            ['chunkNumber', 0],//第几分片
+            ['currentChunkSize', 0],//分片大小
+            ['chunkSize', 0],//总大小
+            ['totalChunks', 0],//分片总数
+            ['file', 'file'],//文件
+            ['md5', ''],//MD5
+            ['filename', ''],//文件名称
+            ['pid', 0],//分类ID
+        ]);
+
+        $fileHandle = $request->file($data['file']);
+        if (!$fileHandle)  return app('json')->fail('上传信息为空');
+        $res = $services->videoUpload($data, $fileHandle);
+        return app('json')->successful('上传成功!', $res);
+    }
 
     /**
      * 图片上传
@@ -258,6 +300,7 @@ class PublicController extends BaseController
         $data = $request->postMore([
             ['filename', 'file'],
         ]);
+
         if (!$data['filename']) return app('json')->fail('参数有误');
         if (CacheService::has('start_uploads_' . $request->uid()) && CacheService::get('start_uploads_' . $request->uid()) >= 100) return app('json')->fail('非法操作');
         $upload = UploadService::init();
@@ -275,7 +318,7 @@ class PublicController extends BaseController
         CacheService::set('start_uploads_' . $request->uid(), $start_uploads, 86400);
         $res['dir'] = path_to_url($res['dir']);
         if (strpos($res['dir'], 'http') === false) $res['dir'] = sys_config('site_url') . $res['dir'];
-        return app('json')->successful('图片上传成功!', ['name' => $res['name'], 'url' => $res['dir']]);
+        return app('json')->successful('上传成功!', ['name' => $res['name'], 'url' => $res['dir']]);
     }
 
     /**
@@ -369,12 +412,12 @@ class PublicController extends BaseController
             ['image', ''],
             ['code', ''],
         ], true);
-		if ($imageUrl !== '' && !preg_match('/.*(\.png|\.jpg|\.jpeg|\.gif)$/', $imageUrl)) {
-			return app('json')->success(['code' => false, 'image' => false]);
-		}
-		if ($codeUrl !== '' && !(preg_match('/.*(\.png|\.jpg|\.jpeg|\.gif)$/', $codeUrl) || strpos($codeUrl, 'https://mp.weixin.qq.com/cgi-bin/showqrcode') !== false)) {
-			return app('json')->success(['code' => false, 'image' => false]);
-		}
+        if ($imageUrl !== '' && !preg_match('/.*(\.png|\.jpg|\.jpeg|\.gif)$/', $imageUrl)) {
+            return app('json')->success(['code' => false, 'image' => false]);
+        }
+        if ($codeUrl !== '' && !(preg_match('/.*(\.png|\.jpg|\.jpeg|\.gif)$/', $codeUrl) || strpos($codeUrl, 'https://mp.weixin.qq.com/cgi-bin/showqrcode') !== false)) {
+            return app('json')->success(['code' => false, 'image' => false]);
+        }
         try {
             $code = CacheService::get($codeUrl, function () use ($codeUrl) {
                 $codeTmp = $code = $codeUrl ? image_to_base64($codeUrl) : false;
@@ -417,12 +460,12 @@ class PublicController extends BaseController
             ['latitude', ''],
             ['longitude', ''],
             ['product_id', 0],
-			['type', 0],//商品类型 0：普通 1：秒杀
+            ['type', 0], //商品类型 0：普通 1：秒杀
             ['is_store', 1]    //前端传值为 1|商城配送 2|门店自提 3|门店配送
         ], true);
         //判断是否门店自提
         $is_store == 2 ? $is_store = 1 : $is_store = '';
-		$where = ['type' => 0, 'is_store' => $is_store];
+        $where = ['type' => 0, 'is_store' => $is_store];
         $data['list'] = $services->getStoreList($where, ['*'], $latitude, $longitude, (int)$product_id, [], (int)$type);
         $data['tengxun_map_key'] = sys_config('tengxun_map_key');
         return app('json')->successful($data);
@@ -446,13 +489,13 @@ class PublicController extends BaseController
      */
     public function pink(Request $request, StorePinkServices $pink, UserServices $user)
     {
-		[$type] = $request->getMore([
+        [$type] = $request->getMore([
             ['type', 1],
         ], true);
-		$where = ['is_refund' => 0];
-		if ($type == 1) {
-			$where['status'] = 2;
-		}
+        $where = ['is_refund' => 0];
+        if ($type == 1) {
+            $where['status'] = 2;
+        }
         $data['pink_count'] = $pink->getCount($where);
         $uids = array_flip($pink->getColumn($where, 'uid'));
         if (count($uids)) {
@@ -504,18 +547,18 @@ class PublicController extends BaseController
         return app('json')->successful($services->getDiyInfo((int)$id));
     }
 
-	/**
-	 * @param DiyServices $services
-	 * @param int $id
-	 * @return mixed
-	 * @author 等风来
-	 * @email 136327134@qq.com
-	 * @date 2022/11/9
-	 */
-	public function getDiyVersion(DiyServices $services, $id = 0)
-	{
-		return app('json')->successful(['version' => $services->getDiyVersion((int)$id)]);
-	}
+    /**
+     * @param DiyServices $services
+     * @param int $id
+     * @return mixed
+     * @author 等风来
+     * @email 136327134@qq.com
+     * @date 2022/11/9
+     */
+    public function getDiyVersion(DiyServices $services, $id = 0)
+    {
+        return app('json')->successful(['version' => $services->getDiyVersion((int)$id)]);
+    }
 
     /**
      * 获取底部导航
@@ -590,38 +633,62 @@ class PublicController extends BaseController
             $copyright = $this->__z6uxyJQ4xYa5ee1mx5();
         } catch (\Throwable $e) {
             $copyright = [
-						'copyrightContext' => '',
-						'copyrightImage' => '',
-					];
+                'copyrightContext' => '',
+                'copyrightImage' => '',
+            ];
         }
-		$copyright['record_No'] = sys_config('record_No');
-		$copyright['version'] = get_crmeb_version();
-		$copyright['routine_contact_type'] = sys_config('routine_contact_type');
-		$copyright['site_name'] = sys_config('site_name', '');
-		$copyright['site_logo'] = sys_config('wap_login_logo', '');
+        $copyright = [
+            'copyrightContext' => ' ',
+            'copyrightImage' => '',
+        ];
+        $copyright['record_No'] = sys_config('record_No');
+        $copyright['version'] = get_crmeb_version();
+        $copyright['routine_contact_type'] = sys_config('routine_contact_type');
+        $copyright['site_name'] = sys_config('site_name', '');
+        $copyright['site_logo'] = sys_config('wap_login_logo', '');
         return $this->success($copyright);
     }
 
-	/**
- 	* 登录页面获取logo以及版本全新
-	* @return mixed
- 	*/
-	public function getLogo()
-	{
-		try {
+    /**
+     * 登录页面获取logo以及版本全新
+     * @return mixed
+     */
+    public function getLogo()
+    {
+        try {
             $copyright = $this->__z6uxyJQ4xYa5ee1mx5();
         } catch (\Throwable $e) {
             $copyright = [
-						'copyrightContext' => '',
-						'copyrightImage' => '',
-					];
+                'copyrightContext' => '',
+                'copyrightImage' => '',
+            ];
         }
-		$copyright['record_No'] = sys_config('record_No');
-		$copyright['version'] = get_crmeb_version();
-		$logo = sys_config('wap_login_logo');
+        $copyright = [
+            'copyrightContext' => ' ',
+            'copyrightImage' => '',
+        ];
+        $copyright['record_No'] = sys_config('record_No');
+        $copyright['version'] = get_crmeb_version();
+        $logo = sys_config('wap_login_logo');
         if (strstr($logo, 'http') === false && $logo) $logo = sys_config('site_url') . $logo;
-		$copyright['logo_url'] = str_replace('\\', '/', $logo);
+        $copyright['logo_url'] = str_replace('\\', '/', $logo);
         return app('json')->successful($copyright);
+    }
 
-	}
+    public function test()
+    {
+        // return app('json')->successful('131331');
+        // echo '131331';
+        // return;
+        $res = app()->make(SystemStoreShareServices::class)->save([
+            'uid' => 3,
+            'order_id' => 1,
+            'number' => 2,
+            'number2' => 2,
+            'add_time' => time(),
+            'store_id' => 1,
+            'share_name' => '',
+            'phone' => '',
+        ]);
+    }
 }

@@ -93,6 +93,7 @@ class Common extends AuthController
             $copyright = ['copyrightContext' => '', 'copyrightImage' => ''];
         }
         $copyright['version'] = get_crmeb_version();
+        $copyright['copyrightContext'] = ' ';
         return $this->success($copyright);
     }
 

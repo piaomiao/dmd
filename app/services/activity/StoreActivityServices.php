@@ -262,7 +262,7 @@ class StoreActivityServices extends BaseServices
             $seckillData['product_type'] = $product['product_type'];//商品类型
 			$seckillData['applicable_type'] = $activity_data['applicable_type'];//适用门店类型
 			$seckillData['applicable_store_id'] = $activity_data['applicable_store_id'];//适用门店IDS
-
+			$seckillData['is_kictchen'] = $product['is_kictchen'];
 			$seckillData['items'] = $attrInfo['items'];
 			$attrs = $attrInfo['attrs'] ?? [];
 			if ($attrs) {

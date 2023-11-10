@@ -288,7 +288,14 @@ class SystemAttachmentServices extends BaseServices
         $res['code'] = 0;
         $res['msg'] = 'error';
         $res['file_path'] = '';
-        if ($data['chunkNumber'] == $data['totalChunks']) {
+        $all = true;
+        for ($i = 1; $i <= $data['totalChunks']; $i++) {
+            if (!is_file($all_dir . '/' . $data['filename'] . '__' . $i)) {
+                $all = false;
+                break;
+            }
+        }
+        if ($all) {
             $blob = '';
             for ($i = 1; $i <= $data['totalChunks']; $i++) {
                 $blob .= file_get_contents($all_dir . '/' . $data['filename'] . '__' . $i);

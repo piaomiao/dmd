@@ -160,17 +160,44 @@ class UserDao extends BaseDao
     {
         return $this->search($where)->field($field)->with([
             'extract' => function ($query) {
-                $query->field('sum(extract_price) as extract_count_price,count(id) as extract_count_num,uid')->where('status', '1')->group('uid');
+                $query->field('sum(extract_price) as extract_count_price,count(id) as extract_count_num,uid')->where('status', '1')->where('mode', 1)->group('uid');
             }, 'order' => function ($query) {
                 $query->field('sum(pay_price) as order_price,count(id) as order_count,uid')->where('pid', '>=', 0)->where('paid', 1)->where('is_del', 0)->where('is_system_del', 0)->where('refund_status', 'IN', [0, 3])->group('uid');
             }, 'brokerage' => function ($query) {
-                $query->field('sum(number) as brokerage_money,uid')->where('status', 1)->where('pm', 1)->group('uid');
+                $query->field('sum(number) as brokerage_money,uid')
+                ->whereIn('type', ['self_brokerage', 'one_brokerage', 'two_brokerage', 'brokerage_user'])->where('status', 1)->where('pm', 1)->group('uid');
             }, 'spreadCount' => function ($query) {
                 $query->field('count(`uid`) as spread_count,spread_uid')->group('spread_uid');
             }, 'spreadUser' => function ($query) {
                 $query->field('uid,phone,nickname');
             }, 'agentLevel' => function ($query) {
                 $query->field('id,name');
+            }
+        ])->when($page && $limit, function ($query) use ($page, $limit) {
+            $query->page($page, $limit);
+        })->order('uid desc')->select()->toArray();
+    }
+
+    /**
+     * 获取股东用户
+     * @param array $where
+     * @param string $field
+     * @param int $page
+     * @param int $limit
+     * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function getShareholderUserList(array $where, string $field = '*', int $page = 0, int $limit = 0)
+    {
+        return $this->search($where)->where('is_shareholder', 1)->field($field)->with([
+            'extract' => function ($query) {
+                $query->field('sum(extract_price) as extract_count_price,count(id) as extract_count_num,uid')->where('status', '1')->where('mode', 2)->group('uid');
+            }, 'brokerage' => function ($query) {
+                $query->field('sum(number) as brokerage_money,uid')->where('type', 'divide')->where('status', 1)->where('pm', 1)->group('uid');
+            }, 'share' => function($query) {
+                $query->field('ifnull(sum(number), 0) as share_number,uid')->where('status', 1)->where('is_del', 0)->group('uid');
             }
         ])->when($page && $limit, function ($query) use ($page, $limit) {
             $query->page($page, $limit);
@@ -201,6 +228,12 @@ class UserDao extends BaseDao
         ])->page($page, $limit)->order('uid desc')->select()->toArray();
     }
 
+
+    public function getShareList(array $where, string $field = '*', int $page = 0, int $limit = 0)
+    {
+        
+    }
+
     /**
      * 获取推广人排行
      * @param array $time
@@ -228,6 +261,16 @@ class UserDao extends BaseDao
      * @return array
      */
     public function getAgentUserIds(array $where)
+    {
+        return $this->search($where)->column('uid');
+    }
+
+    /**
+     * 获取股东ids
+     * @param array $where
+     * @return array
+     */
+    public function getShareholderUserIds(array $where)
     {
         return $this->search($where)->column('uid');
     }

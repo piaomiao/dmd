@@ -224,6 +224,9 @@ class SystemStore extends AuthController
             ['product_verify_status', 0],
 			['applicable_type', 1],//1；全部商品 2部分商品
 			['product_id', []],//同步商品Ids
+            ['open_share', 0],
+            ['share_product_id', 0],
+            ['share_product_image', ''],
         ]);
         $this->validate($data, \app\validate\admin\merchant\SystemStoreValidate::class, $id ? 'update' : 'save');
         if (!!sys_config('erp_open') && !$data['erp_shop_id']) {

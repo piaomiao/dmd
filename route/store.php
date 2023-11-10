@@ -250,6 +250,9 @@ Route::group('storeapi', function () {
         Route::get('statisticsHeader', 'staff.StoreStaff/statisticsHeader')->option(['real_name' => '获取店员交易头部数据']);
         //获取门店所有店员
         Route::get('staff/all', 'staff.StoreStaff/getStaffSelect')->option(['real_name' => '获取门店所有店员']);
+        //股东列表
+        Route::get('shareholder', 'staff.StoreStaff/shareholder')->option(['real_name' => '股东列表']);
+        Route::get('shareholder_logs/:id', 'staff.StoreStaff/shareholderLogs')->option(['real_name' => '股份变更记录']);
         //店员资源路由
         Route::resource('staff', 'staff.StoreStaff')->option(['real_name' => [
             'index' => '获取门店店员列表',
@@ -258,7 +261,7 @@ Route::group('storeapi', function () {
             'save' => '保存店员',
             'edit' => '获取修改门店店员表单',
             'update' => '修改门店店员',
-            'delete' => '删除门店店员'
+            'delete' => '删除门店店员',
         ]]);
 
         //店员绑定uid

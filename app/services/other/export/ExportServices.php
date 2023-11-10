@@ -313,7 +313,48 @@ class ExportServices extends BaseServices
             return $this->export($header, $title, $export, $filename);
         }
     }
-
+    /**
+     * 股东用户导出
+     * @param $data 导出数据
+     */
+    public function userShareholder($data = [], $type = 1)
+    {
+        $header = ['用户编号', '昵称', '电话号码', '订单数量', '订单金额', '佣金金额', '已提现金额', '提现次数', '未提现金额'];
+        $title = ['股东用户', '股东用户导出' . time(), ' 生成时间：' . date('Y-m-d H:i:s', time())];
+        $filename = '股东用户_' . date('YmdHis', time());
+        $export = [];
+        $filekey = [];
+        if (!empty($data)) {
+            $i = 0;
+            foreach ($data as $index => $item) {
+                $one_data = [
+                    'uid' => $item['uid'],
+                    'nickname' => $item['nickname'],
+                    'phone' => $item['phone'],
+                    'order_count' => $item['order_count'],
+                    'order_price' => $item['order_price'],
+                    'brokerage_money' => $item['brokerage_money'],
+                    'extract_count_price' => $item['extract_count_price'],
+                    'extract_count_num' => $item['extract_count_num'],
+                    'brokerage_price' => $item['brokerage_price'],
+                ];
+                if ($type == 1) {
+                    $export[] = $one_data;
+                    if ($i == 0) {
+                        $filekey = array_keys($one_data);
+                    }
+                } else {
+                    $export[] = array_values($one_data);
+                }
+                $i++;
+            }
+        }
+        if ($type == 1) {
+            return compact('header', 'filekey', 'export', 'filename');
+        } else {
+            return $this->export($header, $title, $export, $filename);
+        }
+    }
     /**
      * 微信用户导出
      * @param $data 导出数据

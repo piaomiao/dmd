@@ -23,6 +23,7 @@ use app\services\user\label\UserLabelServices;
 use crmeb\services\UploadService;
 use think\facade\App;
 use app\controller\store\AuthController;
+use think\facade\Db;
 
 /**
  * Class StoreProduct
@@ -85,6 +86,7 @@ class StoreProduct extends AuthController
         $where['relation_id'] = $this->storeId;
 		$where['type'] = 1;
         $data = $this->services->getList($where);
+        // echo Db::getLastSql();exit;
         return app('json')->success($data);
     }
 

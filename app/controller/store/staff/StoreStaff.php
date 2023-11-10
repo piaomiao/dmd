@@ -18,6 +18,8 @@ use app\services\user\UserServices;
 use crmeb\exceptions\AdminException;
 use think\facade\App;
 use app\controller\store\AuthController;
+use app\services\shareholder\ShareholderManageServices;
+use app\services\store\SystemStoreShareServices;
 use app\services\store\SystemStoreStaffServices;
 
 /**
@@ -61,7 +63,36 @@ class StoreStaff extends AuthController
         $where['is_del'] = 0;
         return app('json')->success($this->services->getStoreStaffList($where));
     }
+    /**
+     * 股东列表
+     * @return mixed
+     */
+    public function shareholder()
+    {
+        $where = $this->request->getMore([
+            ['keyword', ''],
+            ['field_key', ''],
+        ]);
+        if ($where['field_key'] == 'all') $where['field_key'] = '';
+        $where['store_id'] = $this->storeId;
+        $where['is_del'] = 0;
+        $services = app()->make(ShareholderManageServices::class);
+        return app('json')->success($services->shareholderSystemPage($where));
+    }
 
+        /**
+     * 股份变更记录
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function shareholderLogs($id)
+    {
+        if (!$id) $this->fail('缺少参数');
+        $services = app()->make(ShareholderManageServices::class);
+        return $this->success($services->getShareLogs($id));
+    }
     /**
      * 获取店员select
      * @param SystemStoreStaffServices $services

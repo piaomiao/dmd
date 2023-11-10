@@ -45,7 +45,7 @@ class PageCategoryDao extends BaseDao
      */
     public function getList(array $where, string $field = '*', int $page = 0, int $limit = 0)
     {
-        return $this->search($where)->field($field)->when($page && $limit, function ($query) use ($page, $limit) {
+        return $this->search($where)->where('status', 1)->field($field)->when($page && $limit, function ($query) use ($page, $limit) {
             $query->page();
         })->order('sort desc')->select()->toArray();
     }

@@ -307,10 +307,11 @@ class BranchOrderServices extends BaseServices
         $list = $this->dao->getOrderList($where + $order_where, ['id', 'order_id', 'uid', 'pay_price', 'pay_time'], 0, 10);
         $chartdata['order_list'] = $list;
 
-        $chartdata['bing_xdata'] = ['收银订单', '充值订单', '分配订单', '核销订单', '付费会员订单'];
+        // $chartdata['bing_xdata'] = ['收银订单', '充值订单', '分配订单', '核销订单', '付费会员订单'];
+        $chartdata['bing_xdata'] = [ '充值订单', '分配订单', '核销订单', '付费会员订单'];
         $color = ['#2EC479', '#7F7AE5', '#FFA21B', '#46A3FF', '#FF6046'];
         //收银订单
-        $pay[] = $this->dao->sum(['type' => 6] + $order_where + $where, 'pay_price', true);
+        // $pay[] = $this->dao->sum(['type' => 6] + $order_where + $where, 'pay_price', true);
         /** @var UserRechargeServices $userRecharge */
         $userRecharge = app()->make(UserRechargeServices::class);
         $pay[] = $userRecharge->sum(['paid' => 1] + $where, 'price', true);

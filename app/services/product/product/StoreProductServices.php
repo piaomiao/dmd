@@ -54,6 +54,7 @@ use crmeb\traits\ServicesTrait;
 use crmeb\traits\OptionTrait;
 use think\exception\ValidateException;
 use think\facade\Config;
+use think\facade\Db;
 use think\facade\Route as Url;
 
 /**
@@ -155,6 +156,7 @@ class StoreProductServices extends BaseServices
             $page = 1;
         }
         $list = $this->dao->getList($where, $page, $limit, $order_string);
+        // return Db::getLastSql();
         if ($list) {
             $cateIds = implode(',', array_column($list, 'cate_id'));
             /** @var StoreProductCategoryServices $categoryService */

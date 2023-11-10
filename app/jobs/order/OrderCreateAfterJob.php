@@ -102,6 +102,7 @@ class OrderCreateAfterJob extends BaseJobs
                 $orderComputed = app()->make(StoreOrderComputedServices::class);
                 if ($userServices->checkUserPromoter($spread_uid)) $orderData['one_brokerage'] = $orderComputed->getOrderSumPrice($cartInfo, 'one_brokerage', false);
                 if ($userServices->checkUserPromoter($spread_two_uid)) $orderData['two_brokerage'] = $orderComputed->getOrderSumPrice($cartInfo, 'two_brokerage', false);
+                $orderData['divide'] =  $orderComputed->getOrderSumPrice($cartInfo, 'divide', false);
             }
             if ($orderData) $createService->update(['id' => $orderId], $orderData);
         } catch (\Throwable $e) {

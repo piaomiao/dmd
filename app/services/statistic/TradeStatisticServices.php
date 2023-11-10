@@ -311,21 +311,21 @@ class TradeStatisticServices extends BaseServices
         ];
         $Chain['rechage'] = $RechgeTotalCurve;
 
-        /** 线下收银 */
-        $offlineMoney = $this->getOfflineTotalMoney($where, 'sum');
-        $lastOfflineMoney = $this->getOfflineTotalMoney($dateWhere, 'sum', "", $isNum);
-        $offlineCurve = $this->getOfflineTotalMoney($where, 'group', "pay_time");
-        $offlineChain = $this->countRate($offlineMoney, $lastOfflineMoney);
-        $topData[5] = [
-            'title' => '线下收银金额',
-            'desc' => '选定条件下，用户在线下扫码支付的金额',
-            'total_money' => $offlineMoney,
-            'rate' => $offlineChain,
-            'value' => $offlineCurve['y'],
-            'type' => 0,
-            'sign' => 'offline',
-        ];
-        $Chain['offline'] = $offlineCurve;
+        // /** 线下收银 */
+        // $offlineMoney = $this->getOfflineTotalMoney($where, 'sum');
+        // $lastOfflineMoney = $this->getOfflineTotalMoney($dateWhere, 'sum', "", $isNum);
+        // $offlineCurve = $this->getOfflineTotalMoney($where, 'group', "pay_time");
+        // $offlineChain = $this->countRate($offlineMoney, $lastOfflineMoney);
+        // $topData[5] = [
+        //     'title' => '线下收银金额',
+        //     'desc' => '选定条件下，用户在线下扫码支付的金额',
+        //     'total_money' => $offlineMoney,
+        //     'rate' => $offlineChain,
+        //     'value' => $offlineCurve['y'],
+        //     'type' => 0,
+        //     'sign' => 'offline',
+        // ];
+        // $Chain['offline'] = $offlineCurve;
 
         /**  支出*/
         //余额支付商品
@@ -343,7 +343,7 @@ class TradeStatisticServices extends BaseServices
         $lastOutYeMoney = bcadd($lastOutYeOrderMoney, $lastOutYeMemberMoney, 2);
         $outYeCurve = $this->totalArrData([$outYeOrderCurve, $outYeMemberCurve]);
         $outYeChain = $this->countRate($outYeOrderChain, $outYeMemberChain);
-        $topData[7] = [
+        $topData[6] = [
             'title' => '余额支付金额',
             'desc' => '用户下单时使用余额实际支付的金额',
             'total_money' => $outYeMoney,
@@ -360,7 +360,7 @@ class TradeStatisticServices extends BaseServices
         $lastOutExtractMoney = $this->getExtractTotalMoney($dateWhere, 'sum', "", $isNum);
         $OutExtractCurve = $this->getExtractTotalMoney($where, 'group', "add_time");
         $OutExtractChain = $this->countRate($outExtractMoney, $lastOutExtractMoney);
-        $topData[8] = [
+        $topData[7] = [
             'title' => '支付佣金金额',
             'desc' => '后台给推广员支付的推广佣金，以实际支付为准',
             'total_money' => $outExtractMoney,
@@ -376,7 +376,7 @@ class TradeStatisticServices extends BaseServices
         $lastOutOrderRefund = $this->getOrderRefundTotalMoney(['refund_type' => 6, 'time' => $dateWhere['time']], 'sum', "", $isNum);
         $outOrderRefundCurve = $this->getOrderRefundTotalMoney(['refund_type' => 6, 'time' => $where['time']], 'group', 'add_time');
         $orderRefundChain = $this->countRate($outOrderRefund, $lastOutOrderRefund);
-        $topData[9] = [
+        $topData[8] = [
             'title' => '商品退款金额',
             'desc' => '用户成功退款的商品金额',
             'total_money' => $outOrderRefund,
@@ -392,7 +392,7 @@ class TradeStatisticServices extends BaseServices
         $lastOutTotalMoney = bcadd($lastOutYeMoney, $lastOutExtractMoney, 2);
         $outTotalCurve = $this->totalArrData([$outYeCurve, $OutExtractCurve]);
         $outTotalChain = $this->countRate($outTotalMoney, $lastOutTotalMoney);
-        $topData[6] = [
+        $topData[5] = [
             'title' => '支出金额',
             'desc' => '余额支付金额、支付佣金金额',
             'total_money' => $outTotalMoney,
@@ -430,7 +430,8 @@ class TradeStatisticServices extends BaseServices
         $inTotalChain = $this->countRate($inTotalMoney, $lastInTotalMoney);
         $topData[0] = [
             'title' => '营业额',
-            'desc' => '商品支付金额、充值金额、购买付费会员金额、线下收银金额',
+            // 'desc' => '商品支付金额、充值金额、购买付费会员金额、线下收银金额',
+            'desc' => '商品支付金额、充值金额、购买付费会员金额',
             'total_money' => $inTotalMoney,
             'rate' => $inTotalChain,
             'value' => $inTotalCurve['y'],

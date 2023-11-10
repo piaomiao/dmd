@@ -125,6 +125,7 @@ class StoreCombinationServices extends BaseServices
         $data['ensure_id'] = is_array($ensure_id) ? implode(',', $ensure_id) : $ensure_id;
         $specs = $productInfo['specs'] ?? [];
         $data['specs'] = is_array($specs) ? json_encode($specs) : $specs;
+        $data['is_kictchen'] = $productInfo['is_kictchen'];
         if (in_array($data['product_type'], [1, 2, 3])) {
             $data['freight'] = 2;
             $data['temp_id'] = 0;

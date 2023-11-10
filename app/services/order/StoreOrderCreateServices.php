@@ -72,14 +72,14 @@ class StoreOrderCreateServices extends BaseServices
     {
         $snowflake = new \Godruoyi\Snowflake\Snowflake();
         $is_callable = function ($currentTime) {
-//            if (is_win()) {
+            //            if (is_win()) {
             $redis = Cache::store('redis');
             $swooleSequenceResolver = new \Godruoyi\Snowflake\RedisSequenceResolver($redis->handler());
             return $swooleSequenceResolver->sequence($currentTime);
-//            } else {
-//                $swooleSequenceResolver = new \Godruoyi\Snowflake\SwooleSequenceResolver();
-//                return $swooleSequenceResolver->sequence($currentTime);
-//            }
+            //            } else {
+            //                $swooleSequenceResolver = new \Godruoyi\Snowflake\SwooleSequenceResolver();
+            //                return $swooleSequenceResolver->sequence($currentTime);
+            //            }
         };
         //32位
         if (PHP_INT_SIZE == 4) {
@@ -98,7 +98,7 @@ class StoreOrderCreateServices extends BaseServices
     {
         mt_srand();
         [$msec, $sec] = explode(' ', microtime());
-        $num = time() + mt_rand(10, 999999) . '' . substr($msec, 2, 3);//生成随机数
+        $num = time() + mt_rand(10, 999999) . '' . substr($msec, 2, 3); //生成随机数
         if (strlen($num) < 12)
             $num = str_pad((string)$num, 12, 0, STR_PAD_RIGHT);
         else
@@ -273,7 +273,7 @@ class StoreOrderCreateServices extends BaseServices
         }
 
         //保存购物车商品信息
-//        StoreCartJob::dispatch([$order['id'], $cartInfo, $uid, $promotions_give['promotions'] ?? []]);
+        //        StoreCartJob::dispatch([$order['id'], $cartInfo, $uid, $promotions_give['promotions'] ?? []]);
         //扣除优惠活动赠品限量
         StorePromotionsJob::dispatchDo('changeGiveLimit', [$promotions_give]);
         //订单创建事件
@@ -346,30 +346,30 @@ class StoreOrderCreateServices extends BaseServices
                 $cart_num = (int)$cart['cart_num'];
                 //减库存加销量
                 switch ($type) {
-                    case 0://普通
-                    case 8://抽奖
-                    case 9://拼单
-                    case 10://桌码
-                    case 6://预售
+                    case 0: //普通
+                    case 8: //抽奖
+                    case 9: //拼单
+                    case 10: //桌码
+                    case 6: //预售
                         if ($store_id) {
                             $res5 = $res5 && $storeBranchService->updataDecStock($cart_num, (int)$cart['productInfo']['id'], $store_id, $unique);
                         } else {
                             $res5 = $res5 && $services->decProductStock($cart_num, (int)$cart['productInfo']['id'], $unique);
                         }
                         break;
-                    case 1://秒杀
+                    case 1: //秒杀
                         $res5 = $res5 && $seckillServices->decSeckillStock($cart_num, $activity_id, $unique, $store_id);
                         break;
-                    case 2://砍价
+                    case 2: //砍价
                         $res5 = $res5 && $bargainServices->decBargainStock($cart_num, $activity_id, $unique, $store_id);
                         break;
-                    case 3://拼团
+                    case 3: //拼团
                         $res5 = $res5 && $pinkServices->decCombinationStock($cart_num, $activity_id, $unique, $store_id);
                         break;
-                    case 5://套餐
+                    case 5: //套餐
                         $res5 = $res5 && $discountServices->decDiscountStock($cart_num, $activity_id, (int)($cart['discount_product_id'] ?? 0), (int)($cart['product_id'] ?? 0), $unique, $store_id);
                         break;
-                    case 7://新人专享
+                    case 7: //新人专享
                         $res5 = $res5 && $storeNewcomerServices->decNewcomerStock($cart_num, $activity_id, $unique, $store_id);
                         break;
                     default:
@@ -379,7 +379,6 @@ class StoreOrderCreateServices extends BaseServices
                             $res5 = $res5 && $services->decProductStock($cart_num, (int)$cart['productInfo']['id'], $unique);
                         }
                         break;
-
                 }
             }
             if ($type == 5 && $activity_id) {
@@ -451,7 +450,7 @@ class StoreOrderCreateServices extends BaseServices
             }
             //$cartInfo = $this->computeOrderProductCoupon($cartInfo, $priceData, $promotions);
             $cartInfo = $this->computeOrderProductIntegral($cartInfo, $priceData);
-//            $cartInfo = $this->computeOrderProductPostage($cartInfo, $priceData);
+            //            $cartInfo = $this->computeOrderProductPostage($cartInfo, $priceData);
             $cartInfo = $this->computeOrderProductFirstDiscount($cartInfo, $priceData);
         } catch (\Throwable $e) {
             Log::error('订单商品结算失败,File：' . $e->getFile() . ',Line：' . $e->getLine() . ',Message：' . $e->getMessage());
@@ -573,7 +572,7 @@ class StoreOrderCreateServices extends BaseServices
                 $total_price = 0;
                 $postage_price = 0.00;
                 foreach ($cartInfo as $cart) {
-                    if (isset($cart['postage_price'])) {//免运费
+                    if (isset($cart['postage_price'])) { //免运费
                         continue;
                     }
                     if (isset($cart['is_gift']) && $cart['is_gift'] == 1) {
@@ -583,7 +582,7 @@ class StoreOrderCreateServices extends BaseServices
                     $count++;
                 }
                 foreach ($cartInfo as &$cart) {
-                    if (isset($cart['postage_price'])) {//免运费
+                    if (isset($cart['postage_price'])) { //免运费
                         continue;
                     }
                     if (isset($cart['is_gift']) && $cart['is_gift'] == 1) {
@@ -721,7 +720,7 @@ class StoreOrderCreateServices extends BaseServices
                             $count--;
                         }
                         break;
-                    case 1://品类券
+                    case 1: //品类券
                         /** @var StoreProductCategoryServices $storeCategoryServices */
                         $storeCategoryServices = app()->make(StoreProductCategoryServices::class);
                         $cateGorys = $storeCategoryServices->getAllById((int)$couponInfo['category_id']);
@@ -752,7 +751,7 @@ class StoreOrderCreateServices extends BaseServices
                             }
                         }
                         break;
-                    case 2://商品劵
+                    case 2: //商品劵
                         foreach ($cartInfo as $cart) {
                             if (!$isOverlay($cart) || (isset($cart['is_gift']) && $cart['is_gift'] == 1)) continue;
                             $product_id = isset($cart['productInfo']['pid']) && $cart['productInfo']['pid'] ? $cart['productInfo']['pid'] : ($cart['product_id'] ?? 0);
@@ -760,7 +759,6 @@ class StoreOrderCreateServices extends BaseServices
                                 $total_price = bcadd((string)$total_price, (string)bcmul((string)$cart['truePrice'], (string)$cart['cart_num'], 4), 2);
                                 $count++;
                             }
-
                         }
                         foreach ($cartInfo as &$cart) {
                             if (!$isOverlay($cart) || (isset($cart['is_gift']) && $cart['is_gift'] == 1)) continue;
@@ -780,7 +778,7 @@ class StoreOrderCreateServices extends BaseServices
                             }
                         }
                         break;
-                    case 3://品牌券
+                    case 3: //品牌券
                         /** @var StoreBrandServices $storeBrandServices */
                         $storeBrandServices = app()->make(StoreBrandServices::class);
                         $brands = $storeBrandServices->getAllById((int)$couponInfo['brand_id']);
@@ -835,6 +833,8 @@ class StoreOrderCreateServices extends BaseServices
         $storeBrokerageTwo = sys_config('store_brokerage_two');
         //佣金计算方式
         $brokerageComputeType = sys_config('brokerage_compute_type', 1);
+        $divideRatio = sys_config('store_brokerage_ratio2', 0);
+        $divideRatio = bcdiv((string)$divideRatio, 100, 4);
         /** @var AgentLevelServices $agentLevelServices */
         $agentLevelServices = app()->make(AgentLevelServices::class);
         [$one_brokerage_up, $two_brokerage_up, $spread_uid, $spread_two_uid] = $agentLevelServices->getAgentLevelBrokerage($uid, $userInfo);
@@ -843,30 +843,32 @@ class StoreOrderCreateServices extends BaseServices
             $storeBrokerageTwo = $spread_two_uid = 0;
         }
         foreach ($cartInfo as &$cart) {
-            $oneBrokerage = '0';//一级返佣金额
-            $twoBrokerage = '0';//二级返佣金额
+            $oneBrokerage = '0'; //一级返佣金额
+            $twoBrokerage = '0'; //二级返佣金额
             $cartNum = (string)$cart['cart_num'] ?? '0';
+            $lirun = bcmul(bcsub((string)($cart['truePrice'] ?? 0), (string)($cart['costPrice'] ?? 0), 2), $cartNum, 4);
+
             if (isset($cart['productInfo']) && isset($cart['is_gift']) && $cart['is_gift'] == 0) {
                 $productInfo = $cart['productInfo'];
                 //指定返佣金额
                 if (isset($productInfo['is_sub']) && $productInfo['is_sub'] == 1) {
                     $oneBrokerage = bcmul((string)($productInfo['attrInfo']['brokerage'] ?? '0'), $cartNum, 2);
                     $twoBrokerage = bcmul((string)($productInfo['attrInfo']['brokerage_two'] ?? '0'), $cartNum, 2);
-                } else {//比例返佣
+                } else { //比例返佣
                     $price = 0;
                     switch ($brokerageComputeType) {
-                        case 1://售价
+                        case 1: //售价
                             if (isset($productInfo['attrInfo'])) {
                                 $price = bcmul((string)($productInfo['attrInfo']['price'] ?? '0'), $cartNum, 4);
                             } else {
                                 $price = bcmul((string)($productInfo['price'] ?? '0'), $cartNum, 4);
                             }
                             break;
-                        case 2://实付金额
+                        case 2: //实付金额
                             $price = bcmul((string)($cart['truePrice'] ?? 0), $cartNum, 4);
                             break;
-                        case 3://商品利润
-                            $price = bcmul(bcsub((string)($cart['truePrice'] ?? 0), (string)($cart['costPrice'] ?? 0), 2), $cartNum, 4);
+                        case 3: //商品利润
+                            $price = $lirun;
                             break;
                     }
                     if ($price > 0) {
@@ -891,6 +893,12 @@ class StoreOrderCreateServices extends BaseServices
 
             $cart['one_brokerage'] = $oneBrokerage;
             $cart['two_brokerage'] = $twoBrokerage;
+            $p = $lirun - ($spread_uid ? $oneBrokerage : 0) - ($spread_two_uid ? $twoBrokerage : 0);
+
+            if ($p > 0) {
+
+                $cart['divide'] = bcmul((string) $p, (string)$divideRatio, 2);
+            }
         }
         return [$cartInfo, [$spread_uid, $spread_two_uid]];
     }

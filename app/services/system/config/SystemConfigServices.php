@@ -76,6 +76,10 @@ class SystemConfigServices extends BaseServices implements ServeConfigInterface
             'url' => '/agent/config/save_basics',
             'auth' => ['fenxiao'],
         ],
+        'shareholder' => [
+            'url' => '/shareholder/config/save_basics',
+            'auth' => ['gudong'],
+        ],
         'marketing' => [
             'url' => '/marketing/integral_config/save_basics',
             'auth' => ['point'],
@@ -1391,6 +1395,9 @@ WSS;
             case 'distribution'://分销设置
                 $data = $this->distributionFormBuild();
                 break;
+            case 'distribution2'://分销设置
+                $data = $this->distribution2FormBuild();
+                break;
             case 'work'://企业微信设置
                 $data = $this->workFormBuild();
                 break;
@@ -1515,7 +1522,55 @@ WSS;
 
         return $build->toArray();
     }
+    /**
+     * 股东设置
+     * @return array
+     */
+    public function distribution2FormBuild()
+    {
+        $build = new Build();
+        $build->url('setting/config/save_basics');
+        
+        $data = $this->getConfigAllField([
+            'brokerage_func_status2', 'brokerage_bindind2',
+            'store_brokerage_binding_status2', 'store_brokerage_binding_time2', 'spread_banner2', 'store_brokerage_ratio2',
+            'extract_time2', 'brokerage_type2', 'user_extract_min_price', 'user_extract_bank_status',
+            'user_extract_wechat_status', 'user_extract_alipay_status', 'user_extract_bank',
+            'pay_weixin_client_cert', 'pay_weixin_client_key', 'withdraw_fee', 'brokerage_level2', 'brokerage_compute_type2'
+        ]);
 
+        $build->rule([
+            Build::tabs()->option('模式', [
+                Build::switch('brokerage_func_status2', $data['brokerage_func_status2']['info'], (int)$data['brokerage_func_status2']['value'])
+                    ->falseValue('关闭', 0)->trueValue('开启', 1)->control(1, [
+                        Build::uploadFrame('spread_banner2', $data['spread_banner2']['info'], $data['spread_banner2']['value'])->maxNum(5)->info($data['spread_banner2']['desc'])->url('/' . config('admin.admin_prefix') .  '/widget.images/index.html')
+                    ])->info($data['brokerage_func_status2']['desc']),
+            ])->option('分成设置', [
+                // Build::radio('brokerage_compute_type2', $data['brokerage_compute_type2']['info'], $data['brokerage_compute_type2']['value'])->options($this->getOptions($data['brokerage_compute_type2']['parameter']))->info($data['brokerage_compute_type2']['desc']),
+                Build::inputNum('store_brokerage_ratio2', $data['store_brokerage_ratio2']['info'], $data['store_brokerage_ratio2']['value'])->min(0)->info($data['store_brokerage_ratio2']['desc']),
+                Build::inputNum('extract_time2', $data['extract_time2']['info'], $data['extract_time2']['value'])->min(0)->info($data['extract_time2']['desc']),
+            ])->option('提现设置', [
+                Build::alert('微信提现到零钱为自动到账（需要开通微信：企业付款到零钱（商家转账到零钱），并确保配置微信支付证书正确，特别注意：需要配置场景、开启API发起转账），其他方式均需要手动转账', Alert::WARNING)->showIcon(true),
+                Build::radio('brokerage_type2', $data['brokerage_type2']['info'], $data['brokerage_type2']['value'])->options($this->getOptions($data['brokerage_type2']['parameter']))->control(1, [
+                    Build::uploadImage('pay_weixin_client_cert', $data['pay_weixin_client_cert']['info'], $data['pay_weixin_client_cert']['value'])
+                        ->url('/file/upload/1?type=1')->format(config('upload.fileExt'))->headers(['Authori-zation' => app()->request->header('Authori-zation')])
+                        ->type('file')->icon('md-add')->info($data['pay_weixin_client_cert']['desc']),
+                    Build::uploadImage('pay_weixin_client_key', $data['pay_weixin_client_key']['info'], $data['pay_weixin_client_key']['value'])
+                        ->url('/file/upload/1?type=1')->format(config('upload.fileExt'))->headers(['Authori-zation' => app()->request->header('Authori-zation')])
+                        ->type('file')->icon('md-add')->info($data['pay_weixin_client_key']['desc']),
+                ])->info($data['brokerage_type2']['desc']),
+                Build::inputNum('user_extract_min_price', $data['user_extract_min_price']['info'], $data['user_extract_min_price']['value'])->info($data['user_extract_min_price']['desc']),
+                Build::inputNum('withdraw_fee', $data['withdraw_fee']['info'], $data['withdraw_fee']['value'])->info($data['withdraw_fee']['desc']),
+                Build::switch('user_extract_bank_status', $data['user_extract_bank_status']['info'], (int)$data['user_extract_bank_status']['value'])->trueValue('开启', 1)->falseValue('关闭', 0)->control(1, [
+                    Build::input('user_extract_bank', $data['user_extract_bank']['info'], $data['user_extract_bank']['value'])->type('textarea')->rows(6)->info($data['user_extract_bank']['desc'])
+                ])->info($data['user_extract_bank_status']['desc']),
+                Build::switch('user_extract_wechat_status', $data['user_extract_wechat_status']['info'], (int)$data['user_extract_wechat_status']['value'])->info($data['user_extract_wechat_status']['desc'])->trueValue('开启', 1)->falseValue('关闭', 0),
+                Build::switch('user_extract_alipay_status', $data['user_extract_alipay_status']['info'], (int)$data['user_extract_alipay_status']['value'])->info($data['user_extract_alipay_status']['desc'])->trueValue('开启', 1)->falseValue('关闭', 0),
+            ]),
+        ]);
+
+        return $build->toArray();
+    }
     /**
      * 积分设置
      * @return array

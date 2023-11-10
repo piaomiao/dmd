@@ -429,3 +429,10 @@ if (!function_exists('response_log_write')) {
         }
     }
 }
+
+if (!function_exists('xlog')) {
+    function xlog($data) 
+    {
+        file_put_contents(dirname(__DIR__) . '/runtime/a.log', date('m-d H:i:s') . "\n" . json_encode($data, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+    }
+}

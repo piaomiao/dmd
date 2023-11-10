@@ -144,6 +144,7 @@ class StoreBargainServices extends BaseServices
         if ($productInfo['is_vip_product'] || $productInfo['is_presale_product']) {
             throw new AdminException('该商品是预售或svip专享');
         }
+
         $data['product_type'] = $productInfo['product_type'];
 		if ($data['product_type'] == 4 && !$data['delivery_type']) {
 			$data['delivery_type'] = $productInfo['delivery_type'];
@@ -159,6 +160,7 @@ class StoreBargainServices extends BaseServices
         $data['ensure_id'] = is_array($ensure_id) ? implode(',', $ensure_id) : $ensure_id;
         $specs = $productInfo['specs'] ?? [];
         $data['specs'] = is_array($specs) ? json_encode($specs) : $specs;
+        $data['is_kictchen'] = $productInfo['is_kictchen'];
         if (in_array($data['product_type'], [1, 2, 3])) {
             $data['freight'] = 2;
             $data['temp_id'] = 0;

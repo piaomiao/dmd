@@ -193,6 +193,8 @@ class StoreProductCategoryServices extends BaseServices
         $f[] = Form::frameImage('big_pic', 'PC端大图(468*340)', Url::buildUrl($url, array('fodder' => 'big_pic')), $info['big_pic'] ?? '')->icon('ios-add')->width('960px')->height('505px')->modal(['footer-hide' => true]);
         $f[] = Form::number('sort', '排序', (int)($info['sort'] ?? 0))->min(0)->min(0);
         $f[] = Form::radio('is_show', '状态', $info['is_show'] ?? 1)->options([['label' => '显示', 'value' => 1], ['label' => '隐藏', 'value' => 0]]);
+        $f[] = Form::radio('is_online', '线上商品分类', $info['is_online'] ?? 1)->options([['label' => '是', 'value' => 1], ['label' => '否', 'value' => 0]])->info('只顶级分类有效')
+        ;
         return $f;
     }
 

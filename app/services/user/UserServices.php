@@ -201,7 +201,15 @@ class UserServices extends BaseServices
     {
         return $this->dao->getWhereSumField($where, 'brokerage_price');
     }
-
+    /**
+     * 某些条件用户分成总和
+     * @param array $where
+     * @return mixed
+     */
+    public function getSumDivide(array $where)
+    {
+        return $this->dao->getWhereSumField($where, 'divide_price');
+    }
     /**
      * 根据条件获取用户指定字段列表
      * @param array $where
@@ -240,6 +248,8 @@ class UserServices extends BaseServices
         return compact('count', 'list');
     }
 
+    
+
     /**
      * 获取分销员ids
      * @param array $where
@@ -259,6 +269,51 @@ class UserServices extends BaseServices
         return $this->dao->getAgentUserIds($where);
     }
 
+    /**
+     * 获取股东用户
+     * @param array $where
+     * @param string $field
+     * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function getShareholderUserList(array $where = [], string $field = '*', $is_page = true)
+    {
+        $where_data['status'] = 1;
+        $where_data['is_shareholder'] = 1;
+        if (isset($where['nickname']) && $where['nickname'] !== '') {
+            $where_data['like'] = $where['nickname'];
+        }
+        if (isset($where['data']) && $where['data']) {
+            $where_data['time'] = $where['data'];
+        }
+        [$page, $limit] = $this->getPageValue($is_page);
+        $list = $this->dao->getShareholderUserList($where_data, $field, $page, $limit);
+        $count = $this->dao->count($where_data);
+        return compact('count', 'list');
+    }
+
+    
+
+    /**
+     * 获取股东ids
+     * @param array $where
+     * @return array
+     */
+    public function getShareholderUserIds(array $where)
+    {
+        $where['status'] = 1;
+        $where['is_shareholder'] = 1;
+        $where['spread_open'] = 1;
+        if (isset($where['nickname']) && $where['nickname'] !== '') {
+            $where['like'] = $where['nickname'];
+        }
+        if (isset($where['data']) && $where['data']) {
+            $where['time'] = $where['data'];
+        }
+        return $this->dao->getShareholderUserIds($where);
+    }
     /**
      * 获取推广人列表
      * @param array $where
@@ -289,6 +344,25 @@ class UserServices extends BaseServices
         }
         [$page, $limit] = $this->getPageValue();
         $list = $this->dao->getSairList($where_data, '*', $page, $limit);
+        $count = $this->dao->count($where_data);
+        return compact('list', 'count');
+    }
+
+
+    public function getShareList(array $where) {
+        $where_data = [];
+        if (isset($where['uid'])) {
+            $where_data['uid'] = $where['uid'];
+            if (isset($where['data']) && $where['data']) {
+                $where_data['time'] = $where['data'];
+            }
+            if (isset($where['storename']) && $where['storename']) {
+                $where_data['like'] = $where['storename'];
+            }
+            $where_data['status'] = 1;
+        }
+        [$page, $limit] = $this->getPageValue();
+        $list = $this->dao->getShareList($where_data, '*', $page, $limit);
         $count = $this->dao->count($where_data);
         return compact('list', 'count');
     }
@@ -1555,8 +1629,11 @@ class UserServices extends BaseServices
         $user['notice'] = 0;
         $user['recharge'] = $userMoneyServices->getRechargeSum($uid);//累计充值
         $user['orderStatusSum'] = (float)$userMoneyServices->sum(['uid' => $uid, 'pm' => 0, 'status' => 1], 'number', true);
-        $user['extractTotalPrice'] = $userExtract->getExtractSum(['uid' => $uid, 'status' => 1]);//累计提现
+        $user['extractTotalPrice'] = $userExtract->getExtractSum(['uid' => $uid, 'status' => 1, 'mode' => 1]);//累计提现
+        $user['extractTotalPrice2'] = $userExtract->getExtractSum(['uid' => $uid, 'status' => 1, 'mode' => 2]);//累计提现
         $user['extractPrice'] = $user['brokerage_price'];//可提现
+        $user['extractPrice2'] = $user['divide_price'];//可提现
+
         $user['statu'] = (int)($configData['store_brokerage_statu'] ?? 0);
         $orderStatusSum = (float)$storeOrder->sum(['pid' => 0, 'paid' => 1, 'refund_status' => [0, 3], 'uid' => $user['uid'], 'is_del' => 0], 'pay_price', true);//累计有效消费
         $user['spread_status'] = ($configData['brokerage_func_status'] ?? 1) && $this->checkUserPromoter($user['uid'], $user, $orderStatusSum);
@@ -1576,6 +1653,12 @@ class UserServices extends BaseServices
         $user['commissionCount'] = bcsub($user['brokerage_price'], $user['broken_commission'], 2);
         if ($user['commissionCount'] < 0)
             $user['commissionCount'] = 0;
+        $user['broken_commission2'] = $userBrokerageServices->getUserFrozenPrice($uid, 2);
+        if ($user['broken_commission2'] < 0)
+            $user['broken_commission2'] = 0;
+        $user['commissionCount2'] = bcsub($user['divide_price'], $user['broken_commission2'], 2);
+        if ($user['commissionCount2'] < 0)
+            $user['commissionCount2'] = 0;
         //用户等级信息
         $userLevelInfo = $userLevel->homeGetUserLevel((int)$user['uid'], $user);
         $user = array_merge($user, $userLevelInfo);

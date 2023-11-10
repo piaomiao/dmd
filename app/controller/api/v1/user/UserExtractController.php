@@ -40,7 +40,8 @@ class UserExtractController
     public function bank(Request $request)
     {
         $uid = (int)$request->uid();
-        return app('json')->successful($this->services->bank($uid));
+        $mode = $request->post('mode', 1);
+        return app('json')->successful($this->services->bank($uid, $mode));
     }
 
     /**
@@ -59,6 +60,7 @@ class UserExtractController
             ['cardnum', ''],
             ['weixin', ''],
             ['qrcode_url', ''],
+            ['mode', 1]
         ]);
         $extractType = Config::get('pay.extractType', []);
         if (!in_array($extractInfo['extract_type'], $extractType))

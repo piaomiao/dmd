@@ -61,6 +61,13 @@ class UserBrokerageServices extends BaseServices
             'status' => 1,
             'pm' => 1
         ],
+        'get_divide' => [
+            'title' => '获得股份分成',
+            'type' => 'divide',
+            'mark' => '用户消费{%pay_price%}元,{%nickname%},获得分成{%number%}',
+            'status' => 1,
+            'pm' => 1
+        ],
         'extract' => [
             'title' => '佣金提现',
             'type' => 'extract',
@@ -178,9 +185,10 @@ class UserBrokerageServices extends BaseServices
      * @param int|string|array $number
      * @param int|string $balance
      * @param int $link_id
+     * @param int $store_id
      * @return bool|mixed
      */
-    public function income(string $type, int $uid, $number, $balance, $link_id)
+    public function income(string $type, int $uid, $number, $balance, $link_id, $store_id = 0)
     {
         $data = $this->incomeData[$type] ?? null;
         if (!$data) {
@@ -189,6 +197,7 @@ class UserBrokerageServices extends BaseServices
         $data['uid'] = $uid;
         $data['balance'] = $balance ?? 0;
         $data['link_id'] = $link_id;
+        $data['store_id'] = (int)$store_id;
         if (is_array($number)) {
             $key = array_keys($number);
             $key = array_map(function ($item) {
@@ -397,6 +406,64 @@ class UserBrokerageServices extends BaseServices
     }
 
     /**
+     * 退佣金
+     * @param $order
+     * @return bool
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function orderRefundDivideBack($order)
+    {
+        $id = (int)$order['id'];
+        $where = [
+            'type' => 'divide',
+            'link_id' => $id,
+            'pm' => 1
+        ];
+        $brokerageList = $this->dao->getUserBrokerageList($where);
+        //子订单
+        if (!$brokerageList && $order['pid']) {
+            $where['link_id'] = $order['pid'];
+            $brokerageList = $this->dao->getUserBrokerageList($where);
+        }
+        $res = true;
+        if ($brokerageList) {
+            /** @var UserServices $userServices */
+            $userServices = app()->make(UserServices::class);
+            $brokerages = $userServices->getColumn([['uid', 'in', array_column($brokerageList, 'uid')]], 'divide_price', 'uid');
+            $brokerageData = [];
+
+            foreach ($brokerageList as $item) {
+				if (!$item['uid'] || $item['uid'] <= 0) continue;
+                $usermoney = $brokerages[$item['uid']] ?? 0;
+                if ($item['number'] > $usermoney) {
+                    $item['number'] = $usermoney;
+                }
+                $res = $res && $userServices->bcDec($item['uid'], 'divide_price', (string)$item['number'], 'uid');
+                $brokerageData[] = [
+                    'title' => '退款分成',
+                    'uid' => $item['uid'],
+                    'pm' => 0,
+                    'add_time' => time(),
+                    'type' => 'refund',
+                    'number' => $item['number'],
+                    'link_id' => $id,
+                    'balance' => bcsub((string)$usermoney, (string)$item['number'], 2),
+                    'mark' => '订单退款扣除分成' . floatval($item['number']) . '元'
+                ];
+            }
+            if ($brokerageData) {
+                $res = $res && $this->dao->saveAll($brokerageData);
+            }
+            //修改佣金冻结时间
+            $this->dao->update($where, ['frozen_time' => 0]);
+        }
+        return $res;
+    }
+
+
+    /**
      * 佣金排行
      * @param string $time
      * @return array
@@ -485,6 +552,35 @@ class UserBrokerageServices extends BaseServices
 
         return $data;
     }
+
+    /**
+     * 股东分成数据    昨天的分成   累计提现金额  当前分成
+     * @param int $uid
+     * @return mixed
+     */
+    public function divide(int $uid)
+    {
+        /** @var UserServices $userServices */
+        $userServices = app()->make(UserServices::class);
+        if (!$userServices->userExist($uid)) {
+            throw new ValidateException('数据不存在');
+        }
+        /** @var UserExtractServices $userExtract */
+        $userExtract = app()->make(UserExtractServices::class);
+        $data = [];
+        $data['uid'] = $uid;
+        $data['pm'] = 1;
+        $data['commissionSum'] = $this->getUsersBokerageSum($data);
+        $data['pm'] = 0;
+        $data['commissionRefund'] = $this->getUsersBokerageSum($data);
+        $data['commissionCount'] = $data['commissionSum'] > $data['commissionRefund'] ? bcsub((string)$data['commissionSum'], (string)$data['commissionRefund'], 2) : 0.00;
+        $data['lastDayCount'] = $this->getUsersBokerageSum($data, 'yesterday');//昨天的佣金
+        $data['extractCount'] = $userExtract->getUserExtract($uid);//累计提现金额
+
+        return $data;
+    }
+
+
 
     /**
      * 前端佣金排行页面数据

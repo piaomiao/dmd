@@ -39,6 +39,11 @@ class PrintJob extends BaseJobs
     {
         try {
             $printer = new Printer($type, $configdata);
+            // var_dump($product);
+            // Log::error('小票打印:' . json_encode($product, JSON_UNESCAPED_UNICODE));
+            // return true;
+
+            // return true;
             $printer->setPrinterContent([
                 'name' => sys_config('site_name'),
                 'orderInfo' => is_object($order) ? $order->toArray() : $order,
@@ -46,7 +51,7 @@ class PrintJob extends BaseJobs
             ])->startPrinter();
             return true;
         } catch (\Throwable $e) {
-            Log::error('小票打印失败失败,失败原因:' . $e->getMessage());
+            Log::error('小票打印失败失败,失败原因:' . $e->getMessage(). json_encode(is_object($order) ? $order->toArray() : $order, JSON_UNESCAPED_UNICODE));
         }
     }
 

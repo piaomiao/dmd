@@ -34,7 +34,7 @@ class UserServices extends BaseServices
         $where['category'] = 'now_money';
         switch ((int)$type) {
             case 0:
-                $where['type'] = ['recharge', 'pay_money', 'system_add', 'pay_product_refund', 'system_sub'];
+                $where['type'] = ['recharge', 'pay_money', 'system_add', 'pay_product_refund', 'system_sub', 'divide'];
                 break;
             case 1:
                 $where['type'] = ['pay_money'];
@@ -47,6 +47,9 @@ class UserServices extends BaseServices
                 break;
             case 4:
                 $where['type'] = ['extract'];
+                break;
+            case 4:
+                $where['type'] = ['divide'];
                 break;
         }
         [$page, $limit] = $this->getPageValue();

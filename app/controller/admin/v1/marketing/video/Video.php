@@ -76,7 +76,8 @@ class Video extends AuthController
             ['product_id', []],
             ['is_show', 1],
             ['is_recommend', 0],
-            ['sort', 0]
+            ['sort', 0],
+			['is_vertical', 0],
         ]);
 		$data['type'] = 0;
 		$data['relation_id'] = 0;

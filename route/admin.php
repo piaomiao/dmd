@@ -298,6 +298,78 @@ Route::group('adminapi', function () {
         \app\http\middleware\admin\AdminCkeckRoleMiddleware::class,
         \app\http\middleware\admin\AdminLogMiddleware::class
     ]);
+
+        /**
+     * 股东管理 相关路由
+     */
+    Route::group('shareholder', function () {
+        //股东员列表
+        Route::get('index', 'v1.shareholder.ShareholderManage/index')->option(['real_name' => '股东员列表']);
+        //修改上级推广人
+        Route::put('spread', 'v1.shareholder.ShareholderManage/editSpread')->option(['real_name' => '修改上级推广人']);
+        //头部统计
+        Route::get('statistics', 'v1.shareholder.ShareholderManage/get_badge')->option(['real_name' => '股东员列表头部统计']);
+        //推广人列表
+        Route::get('stair', 'v1.shareholder.ShareholderManage/get_stair_list')->option(['real_name' => '推广人列表']);
+        //推广人头部统计
+        Route::get('stair/statistics', 'v1.shareholder.ShareholderManage/get_stair_badge')->option(['real_name' => '推广人头部统计']);
+        //计推广订单列表
+        Route::get('stair/order', 'v1.shareholder.ShareholderManage/get_stair_order_list')->option(['real_name' => '推广订单列表']);
+        //推广订单列表头部
+        Route::get('stair/order/statistics', 'v1.shareholder.ShareholderManage/get_stair_order_badge')->option(['real_name' => '推广订单列表头部']);
+        //清除上级推广人
+        Route::put('stair/delete_spread/:uid', 'v1.shareholder.ShareholderManage/delete_spread')->option(['real_name' => '清除上级推广人']);
+        //取消推广资格
+        Route::put('stair/delete_system_spread/:uid', 'v1.shareholder.ShareholderManage/delete_system_spread')->option(['real_name' => '取消推广资格']);
+        //查看公众号推广二维码
+        Route::get('look_code', 'v1.shareholder.ShareholderManage/look_code')->option(['real_name' => '查看公众号推广二维码']);
+        //查看小程序推广二维码
+        Route::get('look_xcx_code', 'v1.shareholder.ShareholderManage/look_xcx_code')->option(['real_name' => '查看小程序推广二维码']);
+        //查看H5推广二维码
+        Route::get('look_h5_code', 'v1.shareholder.ShareholderManage/look_h5_code')->option(['real_name' => '查看H5推广二维码']);
+        //积分配置编辑表单
+        Route::get('config/edit_basics', 'v1.system.config.SystemConfig/edit_basics')->option(['real_name' => '积分配置编辑表单']);
+        //积分配置保存数据
+        Route::post('config/save_basics', 'v1.system.config.SystemConfig/save_basics')->option(['real_name' => '积分配置保存数据']);
+        //股东员等级资源路由
+        Route::resource('level', 'v1.shareholder.ShareholderLevel')->name('ShareholderLevelResource')->option(['real_name' => [
+            'index' => '获取股东等级列表',
+            'read' => '获取股东等级详情',
+            'create' => '获取创建股东等级表单',
+            'save' => '保存股东等级',
+            'edit' => '获取修改股东等级表单',
+            'update' => '修改股东等级',
+            'delete' => '删除股东等级'
+        ]]);
+        //修改股东等级状态
+        Route::put('level/set_status/:id/:status', 'v1.shareholder.ShareholderLevel/set_status')->name('levelSetStatus')->option(['real_name' => '修改股东等级状态']);
+        //股东员等级任务资源路由
+        Route::resource('level_task', 'v1.shareholder.ShareholderLevelTask')->name('ShareholderLevelTaskResource')->option(['real_name' => [
+            'index' => '获取股东等级任务列表',
+            'read' => '获取股东等级任务详情',
+            'create' => '获取创建股东等级任务表单',
+            'save' => '保存股东等级任务',
+            'edit' => '获取修改股东等级任务表单',
+            'update' => '修改股东等级任务',
+            'delete' => '删除股东等级任务'
+        ]]);
+        //修改股东等级任务状态
+        Route::put('level_task/set_status/:id/:status', 'v1.shareholder.ShareholderLevelTask/set_status')->name('levelTaskSetStatus')->option(['real_name' => '修改股东等级任务状态']);
+        //修改股份数
+        Route::get('get_update_form/:id', 'v1.shareholder.ShareholderManage/getUpdateForm')->name('getUpdateForm')->option(['real_name' => '获取赠送股东等级表单']);
+        //修改
+        Route::post('save/:id', 'v1.shareholder.ShareholderManage/save')->name('save')->option(['real_name' => '编辑股东']);
+        //获取股东说明
+        Route::get('get_shareholder_agreement', 'v1.shareholder.ShareholderManage/getShareholderAgreement')->name('getShareholderAgreement')->option(['real_name' => '获取股东说明']);
+        //保存股东说明
+        Route::post('set_shareholder_agreement/:id', 'v1.shareholder.ShareholderManage/setShareholderAgreement')->name('setShareholderAgreement')->option(['real_name' => '保存股东说明']);
+        Route::get('logs/:id', 'v1.shareholder.ShareholderManage/logs')->name('shareLogs')->option(['real_name' => '股份变更记录']);
+
+    })->middleware([
+        \app\http\middleware\admin\AdminAuthTokenMiddleware::class,
+        \app\http\middleware\admin\AdminCkeckRoleMiddleware::class,
+        \app\http\middleware\admin\AdminLogMiddleware::class
+    ]);
     /**
      * 应用模块 相关路由
      */

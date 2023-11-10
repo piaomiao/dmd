@@ -8,7 +8,7 @@
 // +----------------------------------------------------------------------
 // | Author: CRMEB Team <admin@crmeb.com>
 // +----------------------------------------------------------------------
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace app\services\user;
 
@@ -127,9 +127,9 @@ class UserExtractServices extends BaseServices
         /** @var UserServices $userServices */
         $userServices = app()->make(UserServices::class);
         $user = $userServices->getUserInfo($uid);
-		if (!$user) {
-			throw new ValidateException('用户不存在');
-		}
+        if (!$user) {
+            throw new ValidateException('用户不存在');
+        }
         /** @var UserBrokerageServices $userBrokerageServices */
         $userBrokerageServices = app()->make(UserBrokerageServices::class);
         $this->transaction(function () use ($user, $userBrokerageServices, $uid, $id, $extract_number, $message, $userServices, $status, $fail_time) {
@@ -163,31 +163,31 @@ class UserExtractServices extends BaseServices
             if (!$this->dao->update($id, ['status' => 1])) {
                 throw new AdminException('修改失败');
             }
-			//配置开启自动到零钱
+            //配置开启自动到零钱
             if (sys_config('brokerage_type', 0)) {
                 /** @var WechatUserServices $wechatServices */
                 $wechatServices = app()->make(WechatUserServices::class);
                 $openid = $wechatServices->getWechatOpenid((int)$userExtract['uid'], 'wechat');
-                if ($openid) {//公众号用户
-					$type = Payment::WEB;
-				} else {//小程序用户
-					$openid = $wechatServices->getWechatOpenid((int)$userExtract['uid'], 'routine');
-					$type = Payment::MINI;
-				}
-				//app微信用户
-				if (!$openid) {
-					$openid = $wechatServices->getWechatOpenid((int)$userExtract['uid'], 'app');
-					$type = Payment::APP;
-				}
-				if ($openid) {
-					/** @var StoreOrderCreateServices $services */
+                if ($openid) { //公众号用户
+                    $type = Payment::WEB;
+                } else { //小程序用户
+                    $openid = $wechatServices->getWechatOpenid((int)$userExtract['uid'], 'routine');
+                    $type = Payment::MINI;
+                }
+                //app微信用户
+                if (!$openid) {
+                    $openid = $wechatServices->getWechatOpenid((int)$userExtract['uid'], 'app');
+                    $type = Payment::APP;
+                }
+                if ($openid) {
+                    /** @var StoreOrderCreateServices $services */
                     $services = app()->make(StoreOrderCreateServices::class);
                     $wechat_order_id = $services->getNewOrderId();
                     $res = Payment::merchantPay($openid, $wechat_order_id, $extractNumber, '提现佣金到零钱', $type);
                     if (!$res) {
                         throw new ValidateException('企业付款到零钱失败，请稍后再试');
                     }
-				} else {
+                } else {
                     throw new ValidateException('该用户暂不支持企业付款到零钱，请手动转账');
                 }
             }
@@ -344,7 +344,7 @@ class UserExtractServices extends BaseServices
      * @param int $uid
      * @return mixed
      */
-    public function bank(int $uid)
+    public function bank(int $uid, $mode = 1)
     {
         /** @var UserServices $userService */
         $userService = app()->make(UserServices::class);
@@ -354,18 +354,18 @@ class UserExtractServices extends BaseServices
         }
         /** @var UserBrokerageServices $userBrokerageServices */
         $userBrokerageServices = app()->make(UserBrokerageServices::class);
-        $data['broken_commission'] = $userBrokerageServices->getUserFrozenPrice($uid);
+        $data['broken_commission'] = $userBrokerageServices->getUserFrozenPrice($uid, $mode);
         if ($data['broken_commission'] < 0)
             $data['broken_commission'] = '0';
-        $data['brokerage_price'] = $user['brokerage_price'];
+        $data['brokerage_price'] = $mode == 2 ? $user['divide_price'] : $user['brokerage_price'];
         //可提现佣金
         $data['commissionCount'] = bcsub((string)$data['brokerage_price'], (string)$data['broken_commission'], 2);
         $extractBank = sys_config('user_extract_bank') ?? []; //提现银行
-        $extractBank = str_replace("\r\n", "\n", $extractBank);//防止不兼容
+        $extractBank = str_replace("\r\n", "\n", $extractBank); //防止不兼容
         $data['extractBank'] = explode("\n", is_array($extractBank) ? (isset($extractBank[0]) ? $extractBank[0] : $extractBank) : $extractBank);
-        $data['minPrice'] = sys_config('user_extract_min_price');//提现最低金额
-        $data['withdraw_fee'] = sys_config('withdraw_fee');//提现手续费
-        $data['extract_wechat_type'] = sys_config('brokerage_type');//微信提现到账方式
+        $data['minPrice'] = sys_config('user_extract_min_price'); //提现最低金额
+        $data['withdraw_fee'] = sys_config('withdraw_fee'); //提现手续费
+        $data['extract_wechat_type'] = sys_config('brokerage_type'); //微信提现到账方式
         return $data;
     }
 
@@ -384,31 +384,37 @@ class UserExtractServices extends BaseServices
         }
         /** @var UserBrokerageServices $userBrokerageServices */
         $userBrokerageServices = app()->make(UserBrokerageServices::class);
-        $data['broken_commission'] = $userBrokerageServices->getUserFrozenPrice($uid);
+        $data['broken_commission'] = $userBrokerageServices->getUserFrozenPrice($uid, $data['mode']);
         if ($data['broken_commission'] < 0)
             $data['broken_commission'] = 0;
-        $data['brokerage_price'] = $user['brokerage_price'];
-        //可提现佣金
-        $commissionCount = (float)bcsub((string)$data['brokerage_price'], (string)$data['broken_commission'], 2);
-        if ($data['money'] > $commissionCount) {
-            throw new ValidateException('可提现佣金不足');
+        if ($data['mode'] == 2) { //分成
+            $extractPrice = $user['divide_price'];
+            $str = '分成';
+        } else {
+            $extractPrice = $user['brokerage_price'];
+            $str = '佣金';
         }
-
-        $extractPrice = $user['brokerage_price'];
+        //可提现佣金
+        $commissionCount = (float)bcsub((string)$extractPrice, (string)$data['broken_commission'], 2);
+        if ($data['money'] > $commissionCount) {
+            throw new ValidateException('可提现' . $str . '不足');
+        }
+        $data['brokerage_price'] = $extractPrice;
         $userExtractMinPrice = sys_config('user_extract_min_price');
         if ($data['money'] < $userExtractMinPrice) {
             throw new ValidateException('提现金额不能小于' . $userExtractMinPrice . '元');
         }
         if ($extractPrice < 0) {
-            throw new ValidateException('提现佣金不足' . $data['money']);
+            throw new ValidateException('可提现' . $str . '不足' . $data['money']);
         }
         if ($data['money'] > $extractPrice) {
-            throw new ValidateException('提现佣金不足' . $data['money']);
+            throw new ValidateException('可提现' . $str . '不足' . $data['money']);
         }
         if ($data['money'] <= 0) {
-            throw new ValidateException('提现佣金大于0');
+            throw new ValidateException('提现' . $str . '需要大于0');
         }
         $extract_fee = bcmul((string)$data['money'], bcdiv(sys_config('withdraw_fee'), '100', 2), 2);
+
         $insertData = [
             'uid' => $user['uid'],
             'extract_type' => $data['extract_type'],
@@ -416,7 +422,7 @@ class UserExtractServices extends BaseServices
             'extract_fee' => $extract_fee,
             'add_time' => time(),
             'balance' => $user['brokerage_price'],
-            'status' => 0
+            'status' => $data['mode']
         ];
         if (isset($data['name']) && strlen(trim($data['name']))) $insertData['real_name'] = $data['name'];
         else $insertData['real_name'] = $user['nickname'];
@@ -474,9 +480,9 @@ class UserExtractServices extends BaseServices
     public function getOutMoneyByWhere(array $where, string $SumField, string $selectType, string $group = "")
     {
         switch ($selectType) {
-            case "sum" :
+            case "sum":
                 return $this->dao->getWhereSumField($where, $SumField);
-            case "group" :
+            case "group":
                 return $this->dao->getGroupField($where, $SumField, $group);
         }
     }

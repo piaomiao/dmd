@@ -36,6 +36,13 @@ class CategoryController
             ['pid', 0],
         ]);
         $category = $this->services->getCategory($where);
-        return app('json')->success($category);
+        $data = [];
+        foreach($category as &$v) {
+            if($v['is_online']==0) {
+                $v['children'] = [];
+                $data[] = $v;
+            }
+        }
+        return app('json')->success($data);
     }
 }

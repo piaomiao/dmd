@@ -8,7 +8,7 @@
 // +----------------------------------------------------------------------
 // | Author: CRMEB Team <admin@crmeb.com>
 // +----------------------------------------------------------------------
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace app\dao\user;
 
@@ -68,7 +68,7 @@ class UserBrokerageDao extends BaseDao
      */
     public function brokerageRankList(array $where, int $page = 0, int $limit = 0)
     {
-		$where['not_type'] = ['extract_fail', 'refund'];
+        $where['not_type'] = ['extract_fail', 'refund'];
         return $this->search($where)->where('pm', 1)->field('uid,SUM(number) as brokerage_price')->with(['user' => function ($query) {
             $query->field('uid,avatar,nickname');
         }])->order('brokerage_price desc')->group('uid')->when($page && $limit, function ($query) use ($page, $limit) {
@@ -119,9 +119,18 @@ class UserBrokerageDao extends BaseDao
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function getUserFrozenPrice(int $uid)
+    public function getUserFrozenPrice(int $uid, $type = 1)
     {
-        return $this->search(['uid' => $uid, 'status' => 1, 'pm' => 1])->where('frozen_time', '>', time())->sum('number');
+        if ($type == 1) {
+            $types = ['self_brokerage', 'one_brokerage', 'two_brokerage', 'brokerage_user'];
+        } else if ($type == 2) {
+            $types = ['divide'];
+        }
+        return $this->search(['uid' => $uid, 'status' => 1, 'pm' => 1])
+            ->when($type, function ($query) use ($types) {
+                $query->whereIn('type', $types);
+            })
+            ->where('frozen_time', '>', time())->sum('number');
     }
 
     /**
@@ -146,7 +155,8 @@ class UserBrokerageDao extends BaseDao
         return $this->search($where)->field($field)->with([
             'user' => function ($query) {
                 $query->field('uid,nickname');
-            }])->when($page && $limit, function ($query) use ($page, $limit) {
+            }
+        ])->when($page && $limit, function ($query) use ($page, $limit) {
             $query->page($page, $limit);
         })->order('id desc')->select()->toArray();
     }

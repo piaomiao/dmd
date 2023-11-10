@@ -46,6 +46,19 @@ class UserBrokerageController
         return app('json')->successful($this->services->commission($uid));
     }
 
+
+    /**
+     * 股东数据    昨天的分成   累计提现金额  当前分成
+     * @param Request $request
+     * @return mixed
+     */
+    public function divide(Request $request)
+    {
+        $uid = (int)$request->uid();
+        return app('json')->successful($this->services->divide($uid));
+    }
+
+
     /**
      * 推广订单
      * @param Request $request

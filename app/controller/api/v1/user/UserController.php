@@ -12,6 +12,9 @@ namespace app\controller\api\v1\user;
 
 use app\Request;
 use app\services\product\product\StoreProductLogServices;
+use app\services\store\SystemStoreShareServices;
+use app\services\user\UserBrokerageServices;
+use app\services\user\UserExtractServices;
 use app\services\user\UserServices;
 use app\services\wechat\WechatUserServices;
 
@@ -214,6 +217,29 @@ class UserController
         $uid = (int)$request->uid();
         $code = $this->services->getRandCode((int)$uid);
         return app('json')->success(['code' => $code]);
+    }
+
+    /**
+     * 用户股份code
+     * @param Request $request
+     * @return mixed
+     */
+    public function shares(Request $request)
+    {
+        $uid = (int)$request->uid();
+        $shares = app()->make(SystemStoreShareServices::class)->getSharesByUid($uid);
+        $user = $request->user()->toArray();
+
+        //冻结佣金和可提现金额
+        /** @var UserBrokerageServices $userBrokerageServices */
+        $userBrokerageServices = app()->make(UserBrokerageServices::class);
+        $user['broken_commission'] = $userBrokerageServices->getUserFrozenPrice($uid, 2);
+        $user['commissionCount'] = bcsub($user['divide_price'], $user['broken_commission'], 2);
+        /** @var UserExtractServices $extractService */
+        $extractService = app()->make(UserExtractServices::class);
+        $user['extract_price'] = $extractService->sum(['uid' => $uid, 'status' => 1, 'mode' => 2], 'extract_price');
+
+        return app('json')->success(['shares' => $shares, 'user' => $user]);
     }
 
     /**

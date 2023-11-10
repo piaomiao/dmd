@@ -30,13 +30,13 @@ class NoticeService extends BaseServices
      * 发送消息类型
      * @var array
      */
-//    protected $type = [
-//        'is_sms' => NoticeSmsService::class,
-//        'is_system' => SystemSendServices::class,
-//        'is_wechat' => WechatTemplateService::class,
-//        'is_routine' => RoutineTemplateServices::class,
-//        'is_ent_wechat' => EntWechatServices::class,
-//    ];
+    //    protected $type = [
+    //        'is_sms' => NoticeSmsService::class,
+    //        'is_system' => SystemSendServices::class,
+    //        'is_wechat' => WechatTemplateService::class,
+    //        'is_routine' => RoutineTemplateServices::class,
+    //        'is_ent_wechat' => EntWechatServices::class,
+    //    ];
 
     /**
      * @var array
@@ -61,11 +61,11 @@ class NoticeService extends BaseServices
                 /** @var SystemNotificationServices $services */
                 $services = app()->make(SystemNotificationServices::class);
                 $noticeInfo = $services->getOneNotce(['mark' => $event]);
-				if ($noticeInfo) {
-					return $noticeInfo->toArray();
-				} else {
-					return [];
-				}
+                if ($noticeInfo) {
+                    return $noticeInfo->toArray();
+                } else {
+                    return [];
+                }
             });
             $this->event = $event;
         }
@@ -85,7 +85,6 @@ class NoticeService extends BaseServices
             $url = $this->noticeInfo['url'];
             $ent_wechat_text = $this->noticeInfo['ent_wechat_text'];
             EnterpriseWechatJob::dispatchDo('doJob', [$data, $url, $ent_wechat_text]);
-
         }
     }
 
@@ -103,14 +102,15 @@ class NoticeService extends BaseServices
             if (!$product) {
                 throw new ValidateException('订单商品获取失败,无法打印!');
             }
+            $table = null;
             if (isset($order['store_id']) && $order['store_id']) {
                 $store_id = (int)$order['store_id'];
-				if (isset($order['type']) && $order['type'] == 10) {
-					$print = store_config($store_id, 'store_printing_timing');
-					if(!$print || !is_array($print) || !in_array(2,$print)){
-						return true;
-					}
-				}
+                if (isset($order['type']) && $order['type'] == 10) {
+                    $print = store_config($store_id, 'store_printing_timing');
+                    if (!$print || !is_array($print) || !in_array(2, $print)) {
+                        return true;
+                    }
+                }
                 $switch = (bool)store_config($store_id, 'store_pay_success_printing_switch');
                 $configdata = [
                     'clientId' => store_config($store_id, 'store_printing_client_id', ''),
@@ -131,14 +131,35 @@ class NoticeService extends BaseServices
                 if (!$configdata['clientId'] || !$configdata['apiKey'] || !$configdata['partner'] || !$configdata['terminal']) {
                     throw new ValidateException('请先配置小票打印开发者');
                 }
-                PrintJob::dispatch('doJob', ['yi_lian_yun', $configdata, $order, $product]);
+                $terminals = explode(',', $configdata['terminal'], 3);
+                if (count($terminals) >= 2) {
+                    $product0 = [];
+                    $product1 = [];
+                    foreach ($product as $item) {
+                        if (!empty($item['productInfo']['is_kictchen']) && $item['productInfo']['is_kictchen'] == 1) {
+                            $product1[] = $item;
+                        } else {
+                            $product0[] = $item;
+                        }
+                    }
+                    if ($product0) {
+                        $configdata['terminal'] = $terminals[0];
+                        PrintJob::dispatch('doJob', ['yi_lian_yun', $configdata, $order, $product0]);
+                    }
+                    if ($product1) {
+                        $configdata['terminal'] = $terminals[1];
+                        PrintJob::dispatch('doJob', ['yi_lian_yun', $configdata, $order, $product1]);
+                    }
+                } else {
+                    $configdata['terminal'] = $terminals[0];
+                    PrintJob::dispatch('doJob', ['yi_lian_yun', $configdata, $order, $product]);
+                }
             }
             return true;
         } catch (\Throwable $e) {
             \think\facade\Log::error('小票打印失败，原因：' . $e->getMessage());
             return false;
         }
-
     }
 
     /**
@@ -152,7 +173,7 @@ class NoticeService extends BaseServices
             /** @var UserCollageServices $services */
             $services = app()->make(UserCollageServices::class);
             $table = $services->get($tableId);
-            if($table['status']== -1){
+            if ($table['status'] == -1) {
                 throw new ValidateException('桌码已取消');
             }
             /** @var UserCollagePartakeServices $partakeService */
@@ -174,14 +195,38 @@ class NoticeService extends BaseServices
                 if (!$configdata['clientId'] || !$configdata['apiKey'] || !$configdata['partner'] || !$configdata['terminal']) {
                     throw new ValidateException('请先配置小票打印开发者');
                 }
-                PrintJob::dispatch('tableDoJob', ['yi_lian_yun', $configdata, $table, $product]);
+
+                $terminals = explode(',', $configdata['terminal'], 3);
+                if (count($terminals) >= 2) {
+                    $product0 = [];
+                    $product1 = [];
+                    foreach ($product as $item) {
+                        if (!empty($item['productInfo']['is_kictchen']) && $item['productInfo']['is_kictchen'] == 1) {
+                            $product1[] = $item;
+                        } else {
+                            $product0[] = $item;
+                        }
+                    }
+                    if ($product0) {
+                        $configdata['terminal'] = $terminals[0];
+                        PrintJob::dispatch('tableDoJob', ['yi_lian_yun', $configdata, $table, $product0]);
+                    }
+                    if ($product1) {
+                        $configdata['terminal'] = $terminals[1];
+                        PrintJob::dispatch('tableDoJob', ['yi_lian_yun', $configdata, $table, $product1]);
+                    }
+                } else {
+                    $configdata['terminal'] = $terminals[0];
+                    PrintJob::dispatch('tableDoJob', ['yi_lian_yun', $configdata, $table, $product]);
+                }
+
+                // PrintJob::dispatch('tableDoJob', ['yi_lian_yun', $configdata, $table, $product]);
             }
             return true;
         } catch (\Throwable $e) {
             \think\facade\Log::error('小票打印失败，原因：' . $e->getMessage());
             return false;
         }
-
     }
 
     /**
@@ -196,6 +241,4 @@ class NoticeService extends BaseServices
         $wechatServices = app()->make(WechatUserServices::class);
         return $wechatServices->uidToOpenid($uid, $userType);
     }
-
-
 }

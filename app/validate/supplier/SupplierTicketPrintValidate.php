@@ -25,7 +25,7 @@ class SupplierTicketPrintValidate extends Validate
         'develop_id' => 'require|gt:0',
         'api_key' => 'require|max:100',
         'client_id' => 'require|max:100',
-        'terminal_number' => 'require|max:100',
+        'terminal_number' => 'require|max:302',
         'status' => 'require|number',
     ];
 
@@ -43,7 +43,7 @@ class SupplierTicketPrintValidate extends Validate
         'client_id.require' => '请填写应用ID',
         'client_id.max' => '应用ID最多不能超过100个字符',
         'terminal_number.require' => '请填写终端号',
-        'terminal_number.max' => '终端号最多不能超过100个字符',
+        'terminal_number.max' => '单个终端号最多不能超过100个字符',
         'status.require' => '开关',
         'status.number' => '开关',
     ];

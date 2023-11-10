@@ -53,23 +53,23 @@ class StoreOrderServices extends BaseServices
 {
     use ServicesTrait;
 
-	/**
-	 * 订单类型
-	 * @var string[]
-	 */
-	protected $type = [
-		0 => '普通',
-		1 => '秒杀',
-		2 => '砍价',
-		3 => '拼团',
-		4 => '积分',
-		5 => '套餐',
-		6 => '预售',
-		7 => '新人礼',
-		8 => '抽奖',
-		9 => '拼单',
-		10 => '桌码'
-	];
+    /**
+     * 订单类型
+     * @var string[]
+     */
+    protected $type = [
+        0 => '普通',
+        1 => '秒杀',
+        2 => '砍价',
+        3 => '拼团',
+        4 => '积分',
+        5 => '套餐',
+        6 => '预售',
+        7 => '新人礼',
+        8 => '抽奖',
+        9 => '拼单',
+        10 => '桌码'
+    ];
 
     /**
      * 发货类型
@@ -260,7 +260,7 @@ class StoreOrderServices extends BaseServices
         $data['order_count'] = (string)$this->dao->count($where);
         $where = $where + ['paid' => 1];
         $data['sum_price'] = (string)$this->dao->sum($where, 'pay_price', true);
-//        $countWhere = $store_id != -1 ? ['pid' => 0, 'store_id' => $store_id] : ['pid' => 0];
+        //        $countWhere = $store_id != -1 ? ['pid' => 0, 'store_id' => $store_id] : ['pid' => 0];
         if ($uid) {
             $countWhere['uid'] = $uid;
         }
@@ -283,9 +283,9 @@ class StoreOrderServices extends BaseServices
         $data['refunding_count'] = (string)$storeOrderRefundServices->count($refund_where + ['refund_type' => [1, 2, 4, 5]]);
         $data['refunded_count'] = (string)$storeOrderRefundServices->count($refund_where + ['refund_type' => [3, 6]]);
         $data['refund_count'] = (string)bcadd($data['refunding_count'], $data['refunded_count'], 0);
-        $data['yue_pay_status'] = (int)sys_config('balance_func_status') && (int)sys_config('yue_pay_status') == 1 ? (int)1 : (int)2;//余额支付 1 开启 2 关闭
-        $data['pay_weixin_open'] = (int)sys_config('pay_weixin_open') ?? 0;//微信支付 1 开启 0 关闭
-        $data['ali_pay_status'] = (bool)sys_config('ali_pay_status');//支付包支付 1 开启 0 关闭
+        $data['yue_pay_status'] = (int)sys_config('balance_func_status') && (int)sys_config('yue_pay_status') == 1 ? (int)1 : (int)2; //余额支付 1 开启 2 关闭
+        $data['pay_weixin_open'] = (int)sys_config('pay_weixin_open') ?? 0; //微信支付 1 开启 0 关闭
+        $data['ali_pay_status'] = (bool)sys_config('ali_pay_status'); //支付包支付 1 开启 0 关闭
         return $data;
     }
 
@@ -312,11 +312,11 @@ class StoreOrderServices extends BaseServices
                 $cart['surplus_num'] = $cartInfo['surplus_num'];
                 $cart['refund_num'] = $cartInfo['refund_num'];
                 $cart['write_times'] = $cartInfo['write_times'];
-				$cart['write_surplus_times'] = $cartInfo['write_surplus_times'];
-				$cart['write_start'] = $cartInfo['write_start'];
-				$cart['write_end'] = $cartInfo['write_end'];
-				$cart['write_off'] = max(bcsub((string)$cart['write_times'], (string)$cart['write_surplus_times'], 0), 0);
-				$cart['product_type'] = $cartInfo['product_type'];
+                $cart['write_surplus_times'] = $cartInfo['write_surplus_times'];
+                $cart['write_start'] = $cartInfo['write_start'];
+                $cart['write_end'] = $cartInfo['write_end'];
+                $cart['write_off'] = max(bcsub((string)$cart['write_times'], (string)$cart['write_surplus_times'], 0), 0);
+                $cart['product_type'] = $cartInfo['product_type'];
                 $cart['supplier_id'] = $cart['store_id'] = 0;
                 if ($cartInfo['type'] == 1) {
                     $cart['store_id'] = $cartInfo['relation_id'] ?? 0;
@@ -356,13 +356,13 @@ class StoreOrderServices extends BaseServices
         //格式化数据
         $systemValue = Arr::setValeTime($keyValue, is_array($systemValue) ? $systemValue : []);
         switch ($order['type'] ?? 0) {
-            case 1://秒杀
+            case 1: //秒杀
                 $secs = $systemValue['order_seckill_time'] ? $systemValue['order_seckill_time'] : $systemValue['order_activity_time'];
                 break;
-            case 2://砍价
+            case 2: //砍价
                 $secs = $systemValue['order_bargain_time'] ? $systemValue['order_bargain_time'] : $systemValue['order_activity_time'];
                 break;
-            case 3://拼团
+            case 3: //拼团
                 $secs = $systemValue['order_pink_time'] ? $systemValue['order_pink_time'] : $systemValue['order_activity_time'];
                 break;
             default:
@@ -387,17 +387,17 @@ class StoreOrderServices extends BaseServices
             $status['_msg'] = '已为您退款,感谢您的支持';
             $status['_class'] = 'state-sqtk';
         } else if ($order['status'] == 4) {
-            if ($order['delivery_type'] == 'send') {// 送货
+            if ($order['delivery_type'] == 'send') { // 送货
                 $status['_type'] = 2;
                 $status['_title'] = '待收货';
                 $status['_msg'] = date('m月d日H时i分', $statusServices->value(['oid' => $order['id'], 'change_type' => 'delivery'], 'change_time')) . '服务商已送货';
                 $status['_class'] = 'state-ysh';
-            } elseif ($order['delivery_type'] == 'express') {//  发货
+            } elseif ($order['delivery_type'] == 'express') { //  发货
                 $status['_type'] = 2;
                 $status['_title'] = '待收货';
                 $status['_msg'] = date('m月d日H时i分', $statusServices->value(['oid' => $order['id'], 'change_type' => 'delivery_goods'], 'change_time')) . '服务商已发货';
                 $status['_class'] = 'state-ysh';
-            } elseif ($order['delivery_type'] == 'split') {//拆分发货
+            } elseif ($order['delivery_type'] == 'split') { //拆分发货
                 $status['_type'] = 2;
                 $status['_title'] = '待收货';
                 $status['_msg'] = date('m月d日H时i分', $statusServices->value(['oid' => $order['id'], 'change_type' => 'delivery_part_split'], 'change_time')) . '服务商已拆分多个包裹发货';
@@ -431,7 +431,7 @@ class StoreOrderServices extends BaseServices
                 $status['_title'] = '申请退款中';
                 $status['_msg'] = '商家同意退款,请填写退货订单号';
                 $status['_class'] = 'state-sqtk';
-                if ($order['shipping_type'] == 1 || !$storeInfo) {//平台
+                if ($order['shipping_type'] == 1 || !$storeInfo) { //平台
                     $status['refund_name'] = sys_config('refund_name', '');
                     $status['refund_phone'] = sys_config('refund_phone', '');
                     $status['refund_address'] = sys_config('refund_address', '');
@@ -445,7 +445,7 @@ class StoreOrderServices extends BaseServices
                 $status['_title'] = '申请退款中';
                 $status['_msg'] = '等待商家收货';
                 $status['_class'] = 'state-sqtk';
-                if ($order['shipping_type'] == 1 || !$storeInfo) {//平台
+                if ($order['shipping_type'] == 1 || !$storeInfo) { //平台
                     $status['refund_name'] = sys_config('refund_name', '');
                     $status['refund_phone'] = sys_config('refund_phone', '');
                     $status['refund_address'] = sys_config('refund_address', '');
@@ -494,17 +494,17 @@ class StoreOrderServices extends BaseServices
                 }
             }
         } else if ($order['status'] == 1) {
-            if ($order['delivery_type'] == 'send') {// 配送
+            if ($order['delivery_type'] == 'send') { // 配送
                 $status['_type'] = 2;
                 $status['_title'] = '待收货';
                 $status['_msg'] = date('m月d日H时i分', $statusServices->value(['oid' => $order['id'], 'change_type' => 'delivery'], 'change_time')) . '服务商已发货';
                 $status['_class'] = 'state-ysh';
-            } elseif ($order['delivery_type'] == 'express') {//  发货
+            } elseif ($order['delivery_type'] == 'express') { //  发货
                 $status['_type'] = 2;
                 $status['_title'] = '待收货';
                 $status['_msg'] = date('m月d日H时i分', $statusServices->value(['oid' => $order['id'], 'change_type' => 'delivery_goods'], 'change_time')) . '服务商已发货';
                 $status['_class'] = 'state-ysh';
-            } elseif ($order['delivery_type'] == 'split') {//拆分发货
+            } elseif ($order['delivery_type'] == 'split') { //拆分发货
                 $status['_type'] = 2;
                 $status['_title'] = '待收货';
                 $status['_msg'] = date('m月d日H时i分', $statusServices->value(['oid' => $order['id'], 'change_type' => 'delivery_split'], 'change_time')) . '服务商已拆分多个包裹发货';
@@ -540,7 +540,7 @@ class StoreOrderServices extends BaseServices
             try {
                 $order_details_images = sys_data('order_details_images') ?: [];
                 $order_details_images = array_combine(array_column($order_details_images, 'order_status'), $order_details_images);
-				$_type = $order['_status']['_type'] == 5 ? 2 : $order['_status']['_type'];
+                $_type = $order['_status']['_type'] == 5 ? 2 : $order['_status']['_type'];
                 $order['status_pic'] = $order_details_images[$_type]['pic'] ?? '';
             } catch (\Throwable $e) {
             }
@@ -571,7 +571,7 @@ class StoreOrderServices extends BaseServices
         $pink_name = $color = '';
         if ($order && isset($order['type'])) {
             switch ($order['type']) {
-                case 0://普通订单
+                case 0: //普通订单
                     if ($order['shipping_type'] == 1) {
                         $pink_name = $abridge ? '普通' : '[普通订单]';
                         $color = '#895612';
@@ -586,15 +586,15 @@ class StoreOrderServices extends BaseServices
                         $color = '#2EC479';
                     }
                     break;
-                case 1://秒杀
+                case 1: //秒杀
                     $pink_name = $abridge ? '秒杀' : '[秒杀订单]';
                     $color = '#32c5e9';
                     break;
-                case 2://砍价
+                case 2: //砍价
                     $pink_name = $abridge ? '砍价' : '[砍价订单]';
                     $color = '#12c5e9';
                     break;
-                case 3://拼团
+                case 3: //拼团
                     if (isset($order['pinkStatus'])) {
                         switch ($order['pinkStatus']) {
                             case 1:
@@ -619,27 +619,27 @@ class StoreOrderServices extends BaseServices
                         $color = '#457856';
                     }
                     break;
-                case 5://套餐
+                case 5: //套餐
                     $pink_name = $abridge ? '优惠' : '[优惠套餐]';
                     $color = '#12c5e9';
                     break;
-                case 6://预售
+                case 6: //预售
                     $pink_name = $abridge ? '预售' : '[预售订单]';
                     $color = '#12c5e9';
                     break;
-                case 7://新人礼
+                case 7: //新人礼
                     $pink_name = $abridge ? '新人礼' : '[新人专享]';
                     $color = '#12c5e9';
                     break;
-                case 8://抽奖
+                case 8: //抽奖
                     $pink_name = $abridge ? '抽奖' : '[抽奖订单]';
                     $color = '#12c5e9';
                     break;
-                case 9://拼单
+                case 9: //拼单
                     $pink_name = $abridge ? '拼单' : '[拼单订单]';
                     $color = '#12c5e9';
                     break;
-                case 10://桌码
+                case 10: //桌码
                     $pink_name = $abridge ? '桌码' : '[桌码订单]';
                     $color = '#F5222D';
                     break;
@@ -707,18 +707,18 @@ class StoreOrderServices extends BaseServices
                 $item['_status'] = -1;
             } else if ($item['paid'] == 0 && $item['status'] == 0) {
                 $status_name['status_name'] = '未支付';
-                $item['_status'] = 1;//未支付
+                $item['_status'] = 1; //未支付
             } else if ($item['paid'] == 1 && $item['status'] == 4 && in_array($item['shipping_type'], [1, 3]) && $item['refund_status'] == 0) {
                 $status_name['status_name'] = '部分发货';
-                $item['_status'] = 8;//已支付 部分发货
+                $item['_status'] = 8; //已支付 部分发货
             } else if ($item['paid'] == 1 && $item['refund_status'] == 2) {
                 $status_name['status_name'] = '已退款';
-                $item['_status'] = 7;//已支付 已退款
+                $item['_status'] = 7; //已支付 已退款
             } else if ($item['paid'] == 1 && $item['status'] == 5 && $item['refund_status'] == 0) {
                 $status_name['status_name'] = $item['shipping_type'] == 2 ? '部分核销' : '部分收货';
-                $item['_status'] = 12;//已支付 部分核销
+                $item['_status'] = 12; //已支付 部分核销
             } else if ($item['paid'] == 1 && $item['refund_status'] == 1) {
-                $item['_status'] = 3;//已支付 申请退款中
+                $item['_status'] = 3; //已支付 申请退款中
                 $refundReasonTime = $item['refund_reason_time'] ? date('Y-m-d H:i', $item['refund_reason_time']) : '';
                 $refundReasonWapImg = json_decode($item['refund_reason_wap_img'], true);
                 $refundReasonWapImg = $refundReasonWapImg ? $refundReasonWapImg : [];
@@ -738,25 +738,25 @@ class StoreOrderServices extends BaseServices
 HTML;
                 $status_name['pics'] = $img;
             } else if ($item['paid'] == 1 && $item['refund_status'] == 4) {
-                $item['_status'] = 10;//拆单发货 已全部申请退款
+                $item['_status'] = 10; //拆单发货 已全部申请退款
                 $status_name['status_name'] = '退款中';
             } else if ($item['paid'] == 1 && $item['status'] == 0 && in_array($item['shipping_type'], [1, 3]) && $item['refund_status'] == 0) {
                 $status_name['status_name'] = '未发货';
-                $item['_status'] = 2;//已支付 未发货
+                $item['_status'] = 2; //已支付 未发货
             } else if ($item['paid'] == 1 && in_array($item['status'], [0, 1]) && $item['shipping_type'] == 2 && $item['refund_status'] == 0) {
                 $status_name['status_name'] = '未核销';
-                $item['_status'] = 11;//已支付 待核销
+                $item['_status'] = 11; //已支付 待核销
             } else if ($item['paid'] == 1 && in_array($item['status'], [1, 5]) && in_array($item['shipping_type'], [1, 3]) && $item['refund_status'] == 0) {
                 $status_name['status_name'] = '待收货';
-                $item['_status'] = 4;//已支付 待收货
+                $item['_status'] = 4; //已支付 待收货
             } else if ($item['paid'] == 1 && $item['status'] == 2 && $item['refund_status'] == 0) {
                 $status_name['status_name'] = '待评价';
-                $item['_status'] = 5;//已支付 待评价
+                $item['_status'] = 5; //已支付 待评价
             } else if ($item['paid'] == 1 && $item['status'] == 3 && $item['refund_status'] == 0) {
                 $status_name['status_name'] = '已完成';
-                $item['_status'] = 6;//已支付 已完成
+                $item['_status'] = 6; //已支付 已完成
             } else if ($item['paid'] == 1 && $item['refund_status'] == 3) {
-                $item['_status'] = 9;//拆单发货 部分申请退款
+                $item['_status'] = 9; //拆单发货 部分申请退款
                 $status_name['status_name'] = '部分退款';
             }
             $item['status_name'] = $status_name;
@@ -785,12 +785,12 @@ HTML;
      */
     public function getOrderPrice($where)
     {
-//        $where['pid'] = 0;//子订单不统计
+        //        $where['pid'] = 0;//子订单不统计
         $whereData = [];
         $price['today_count_sum'] = 0; //今日订单总数
         $price['count_sum'] = 0; //订单总数
-        $price['pay_price'] = 0;//支付金额
-        $price['today_pay_price'] = 0;//今日支付金额
+        $price['pay_price'] = 0; //支付金额
+        $price['today_pay_price'] = 0; //今日支付金额
         if ($where['status'] == '') {
             $whereData['paid'] = 1;
             $whereData['refund_status'] = [0, 3];
@@ -935,9 +935,9 @@ HTML;
         //交易完成
         $data['complete'] = (string)$this->dao->count($count_where + ['status' => 4]);
         //退款中
-//        $data['refunding'] = (string)$this->dao->count(['status' => -1, 'time' => $where['time'], 'is_system_del' => 0, 'type' => $where['type']]);
+        //        $data['refunding'] = (string)$this->dao->count(['status' => -1, 'time' => $where['time'], 'is_system_del' => 0, 'type' => $where['type']]);
         //已退款
-//        $data['refund'] = (string)$this->dao->count(['status' => -2, 'time' => $where['time'], 'is_system_del' => 0, 'type' => $where['type']]);
+        //        $data['refund'] = (string)$this->dao->count(['status' => -2, 'time' => $where['time'], 'is_system_del' => 0, 'type' => $where['type']]);
         //删除订单
         $data['del'] = (string)$this->dao->count($count_where + ['status' => -4]);
         return $data;
@@ -960,9 +960,9 @@ HTML;
             'is_system_del' => 0
         ];
         $count_where = ['type' => $where['type'] ?? 0, 'store_id' => $where['store_id'] ?? 0, 'supplier_id' => $where['supplier_id'] ?? 0];
-//		if ($count_where['store_id'] || $count_where['supplier_id'] || (isset($where['plat_type']) && in_array($where['plat_type'], [1, 2]))) {
-//			$default_where['pid'] = 0;
-//		}
+        //		if ($count_where['store_id'] || $count_where['supplier_id'] || (isset($where['plat_type']) && in_array($where['plat_type'], [1, 2]))) {
+        //			$default_where['pid'] = 0;
+        //		}
         //全部订单
         $data['all'] = (string)$this->dao->count($default_where + $count_where);
         //普通订单
@@ -1024,9 +1024,9 @@ HTML;
         //交易完成
         $data['complete'] = (string)$this->dao->count($count_where + ['status' => 4]);
         //退款中
-//        $data['refunding'] = (string)$this->dao->count(['status' => -1, 'time' => $where['time'], 'is_system_del' => 0, 'type' => $where['type']]);
+        //        $data['refunding'] = (string)$this->dao->count(['status' => -1, 'time' => $where['time'], 'is_system_del' => 0, 'type' => $where['type']]);
         //已退款
-//        $data['refund'] = (string)$this->dao->count(['status' => -2, 'time' => $where['time'], 'is_system_del' => 0, 'type' => $where['type']]);
+        //        $data['refund'] = (string)$this->dao->count(['status' => -2, 'time' => $where['time'], 'is_system_del' => 0, 'type' => $where['type']]);
         //删除订单
         $data['del'] = (string)$this->dao->count($count_where + ['status' => -4]);
         return $data;
@@ -1070,25 +1070,25 @@ HTML;
         if ($order['paid']) {
             throw new ValidateException('订单已支付');
         }
-		//限制改价金额两位小数
-		$data['pay_price'] = sprintf("%.2f", $data['pay_price']);
-		$pay_price = $order['pay_price'];
-		if ($order['change_price']) {//已经改过一次价
-			$pay_price = bcadd((string)$pay_price, (string)$order['change_price'], 2);
-		}
-		//记录改价优惠金额
-		$data['change_price'] = (float)bcsub((string)$pay_price, (string)($data['pay_price'] ?? 0), 2);
+        //限制改价金额两位小数
+        $data['pay_price'] = sprintf("%.2f", $data['pay_price']);
+        $pay_price = $order['pay_price'];
+        if ($order['change_price']) { //已经改过一次价
+            $pay_price = bcadd((string)$pay_price, (string)$order['change_price'], 2);
+        }
+        //记录改价优惠金额
+        $data['change_price'] = (float)bcsub((string)$pay_price, (string)($data['pay_price'] ?? 0), 2);
 
         /** @var StoreOrderStatusServices $services */
         $services = app()->make(StoreOrderStatusServices::class);
         $this->transaction(function () use ($id, $order, $data, $services) {
             $res = $this->dao->update($id, $data);
             $res = $res && $services->save([
-                    'oid' => $id,
-                    'change_type' => 'order_edit',
-                    'change_time' => time(),
-                    'change_message' => '商品总价为：' . $order['pay_price'] . ' 修改实际支付金额为：' . $data['pay_price']
-                ]);
+                'oid' => $id,
+                'change_type' => 'order_edit',
+                'change_time' => time(),
+                'change_message' => '商品总价为：' . $order['pay_price'] . ' 修改实际支付金额为：' . $data['pay_price']
+            ]);
             if ($res) {
                 return true;
             } else {
@@ -1111,46 +1111,48 @@ HTML;
     {
         $datalist = [];
         $where = [];
-        $series1 = ['normal' => ['color' => [
-            'x' => 0, 'y' => 0, 'x2' => 0, 'y2' => 1,
-            'colorStops' => [
-                [
-                    'offset' => 0,
-                    'color' => '#69cdff'
-                ],
-                [
-                    'offset' => 0.5,
-                    'color' => '#3eb3f7'
-                ],
-                [
-                    'offset' => 1,
-                    'color' => '#1495eb'
+        $series1 = [
+            'normal' => ['color' => [
+                'x' => 0, 'y' => 0, 'x2' => 0, 'y2' => 1,
+                'colorStops' => [
+                    [
+                        'offset' => 0,
+                        'color' => '#69cdff'
+                    ],
+                    [
+                        'offset' => 0.5,
+                        'color' => '#3eb3f7'
+                    ],
+                    [
+                        'offset' => 1,
+                        'color' => '#1495eb'
+                    ]
                 ]
-            ]
-        ]]
+            ]]
         ];
-        $series2 = ['normal' => ['color' => [
-            'x' => 0, 'y' => 0, 'x2' => 0, 'y2' => 1,
-            'colorStops' => [
-                [
-                    'offset' => 0,
-                    'color' => '#6fdeab'
-                ],
-                [
-                    'offset' => 0.5,
-                    'color' => '#44d693'
-                ],
-                [
-                    'offset' => 1,
-                    'color' => '#2cc981'
+        $series2 = [
+            'normal' => ['color' => [
+                'x' => 0, 'y' => 0, 'x2' => 0, 'y2' => 1,
+                'colorStops' => [
+                    [
+                        'offset' => 0,
+                        'color' => '#6fdeab'
+                    ],
+                    [
+                        'offset' => 0.5,
+                        'color' => '#44d693'
+                    ],
+                    [
+                        'offset' => 1,
+                        'color' => '#2cc981'
+                    ]
                 ]
-            ]
-        ]]
+            ]]
         ];
         $chartdata = [];
-        $data = [];//临时
-        $chartdata['yAxis']['maxnum'] = 0;//最大值数量
-        $chartdata['yAxis']['maxprice'] = 0;//最大值金额
+        $data = []; //临时
+        $chartdata['yAxis']['maxnum'] = 0; //最大值数量
+        $chartdata['yAxis']['maxprice'] = 0; //最大值金额
         switch ($cycle) {
             case 'thirtyday':
                 //上期
@@ -1178,14 +1180,14 @@ HTML;
                     $data['count'][] = $v['count'];
                     $data['price'][] = round($v['price'], 2);
                     if ($chartdata['yAxis']['maxnum'] < $v['count'])
-                        $chartdata['yAxis']['maxnum'] = $v['count'];//日最大订单数
+                        $chartdata['yAxis']['maxnum'] = $v['count']; //日最大订单数
                     if ($chartdata['yAxis']['maxprice'] < $v['price'])
-                        $chartdata['yAxis']['maxprice'] = $v['price'];//日最大金额
+                        $chartdata['yAxis']['maxprice'] = $v['price']; //日最大金额
                 }
-                $chartdata['legend'] = ['订单金额', '订单数'];//分类
-                $chartdata['xAxis'] = $data['day'];//X轴值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][0], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['price']];//分类1值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][1], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['count'], 'yAxisIndex' => 1];//分类2值
+                $chartdata['legend'] = ['订单金额', '订单数']; //分类
+                $chartdata['xAxis'] = $data['day']; //X轴值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][0], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['price']]; //分类1值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][1], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['count'], 'yAxisIndex' => 1]; //分类2值
                 break;
             case 'week':
                 $weekarray = [['周日'], ['周一'], ['周二'], ['周三'], ['周四'], ['周五'], ['周六']];
@@ -1218,18 +1220,18 @@ HTML;
                     $data['now']['count'][] = $v['now']['count'];
                     $data['now']['price'][] = round($v['now']['price'], 2);
                     if ($chartdata['yAxis']['maxnum'] < $v['pre']['count'] || $chartdata['yAxis']['maxnum'] < $v['now']['count']) {
-                        $chartdata['yAxis']['maxnum'] = $v['pre']['count'] > $v['now']['count'] ? $v['pre']['count'] : $v['now']['count'];//日最大订单数
+                        $chartdata['yAxis']['maxnum'] = $v['pre']['count'] > $v['now']['count'] ? $v['pre']['count'] : $v['now']['count']; //日最大订单数
                     }
                     if ($chartdata['yAxis']['maxprice'] < $v['pre']['price'] || $chartdata['yAxis']['maxprice'] < $v['now']['price']) {
-                        $chartdata['yAxis']['maxprice'] = $v['pre']['price'] > $v['now']['price'] ? $v['pre']['price'] : $v['now']['price'];//日最大金额
+                        $chartdata['yAxis']['maxprice'] = $v['pre']['price'] > $v['now']['price'] ? $v['pre']['price'] : $v['now']['price']; //日最大金额
                     }
                 }
-                $chartdata['legend'] = ['上周金额', '本周金额', '上周订单数', '本周订单数'];//分类
-                $chartdata['xAxis'] = $data['day'];//X轴值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][0], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['pre']['price']];//分类1值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][1], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['now']['price']];//分类1值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][2], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['pre']['count'], 'yAxisIndex' => 1];//分类2值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][3], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['now']['count'], 'yAxisIndex' => 1];//分类2值
+                $chartdata['legend'] = ['上周金额', '本周金额', '上周订单数', '本周订单数']; //分类
+                $chartdata['xAxis'] = $data['day']; //X轴值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][0], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['pre']['price']]; //分类1值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][1], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['now']['price']]; //分类1值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][2], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['pre']['count'], 'yAxisIndex' => 1]; //分类2值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][3], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['now']['count'], 'yAxisIndex' => 1]; //分类2值
                 break;
             case 'month':
                 $weekarray = ['01' => ['1'], '02' => ['2'], '03' => ['3'], '04' => ['4'], '05' => ['5'], '06' => ['6'], '07' => ['7'], '08' => ['8'], '09' => ['9'], '10' => ['10'], '11' => ['11'], '12' => ['12'], '13' => ['13'], '14' => ['14'], '15' => ['15'], '16' => ['16'], '17' => ['17'], '18' => ['18'], '19' => ['19'], '20' => ['20'], '21' => ['21'], '22' => ['22'], '23' => ['23'], '24' => ['24'], '25' => ['25'], '26' => ['26'], '27' => ['27'], '28' => ['28'], '29' => ['29'], '30' => ['30'], '31' => ['31']];
@@ -1262,18 +1264,18 @@ HTML;
                     $data['now']['count'][] = $v['now']['count'];
                     $data['now']['price'][] = round($v['now']['price'], 2);
                     if ($chartdata['yAxis']['maxnum'] < $v['pre']['count'] || $chartdata['yAxis']['maxnum'] < $v['now']['count']) {
-                        $chartdata['yAxis']['maxnum'] = $v['pre']['count'] > $v['now']['count'] ? $v['pre']['count'] : $v['now']['count'];//日最大订单数
+                        $chartdata['yAxis']['maxnum'] = $v['pre']['count'] > $v['now']['count'] ? $v['pre']['count'] : $v['now']['count']; //日最大订单数
                     }
                     if ($chartdata['yAxis']['maxprice'] < $v['pre']['price'] || $chartdata['yAxis']['maxprice'] < $v['now']['price']) {
-                        $chartdata['yAxis']['maxprice'] = $v['pre']['price'] > $v['now']['price'] ? $v['pre']['price'] : $v['now']['price'];//日最大金额
+                        $chartdata['yAxis']['maxprice'] = $v['pre']['price'] > $v['now']['price'] ? $v['pre']['price'] : $v['now']['price']; //日最大金额
                     }
                 }
-                $chartdata['legend'] = ['上月金额', '本月金额', '上月订单数', '本月订单数'];//分类
-                $chartdata['xAxis'] = $data['day'];//X轴值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][0], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['pre']['price']];//分类1值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][1], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['now']['price']];//分类1值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][2], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['pre']['count'], 'yAxisIndex' => 1];//分类2值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][3], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['now']['count'], 'yAxisIndex' => 1];//分类2值
+                $chartdata['legend'] = ['上月金额', '本月金额', '上月订单数', '本月订单数']; //分类
+                $chartdata['xAxis'] = $data['day']; //X轴值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][0], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['pre']['price']]; //分类1值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][1], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['now']['price']]; //分类1值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][2], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['pre']['count'], 'yAxisIndex' => 1]; //分类2值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][3], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['now']['count'], 'yAxisIndex' => 1]; //分类2值
                 break;
             case 'year':
                 $weekarray = ['01' => ['一月'], '02' => ['二月'], '03' => ['三月'], '04' => ['四月'], '05' => ['五月'], '06' => ['六月'], '07' => ['七月'], '08' => ['八月'], '09' => ['九月'], '10' => ['十月'], '11' => ['十一月'], '12' => ['十二月']];
@@ -1308,18 +1310,18 @@ HTML;
                     $data['now']['count'][] = $v['now']['count'];
                     $data['now']['price'][] = round($v['now']['price'], 2);
                     if ($chartdata['yAxis']['maxnum'] < $v['pre']['count'] || $chartdata['yAxis']['maxnum'] < $v['now']['count']) {
-                        $chartdata['yAxis']['maxnum'] = $v['pre']['count'] > $v['now']['count'] ? $v['pre']['count'] : $v['now']['count'];//日最大订单数
+                        $chartdata['yAxis']['maxnum'] = $v['pre']['count'] > $v['now']['count'] ? $v['pre']['count'] : $v['now']['count']; //日最大订单数
                     }
                     if ($chartdata['yAxis']['maxprice'] < $v['pre']['price'] || $chartdata['yAxis']['maxprice'] < $v['now']['price']) {
-                        $chartdata['yAxis']['maxprice'] = $v['pre']['price'] > $v['now']['price'] ? $v['pre']['price'] : $v['now']['price'];//日最大金额
+                        $chartdata['yAxis']['maxprice'] = $v['pre']['price'] > $v['now']['price'] ? $v['pre']['price'] : $v['now']['price']; //日最大金额
                     }
                 }
-                $chartdata['legend'] = ['去年金额', '今年金额', '去年订单数', '今年订单数'];//分类
-                $chartdata['xAxis'] = $data['day'];//X轴值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][0], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['pre']['price']];//分类1值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][1], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['now']['price']];//分类1值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][2], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['pre']['count'], 'yAxisIndex' => 1];//分类2值
-                $chartdata['series'][] = ['name' => $chartdata['legend'][3], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['now']['count'], 'yAxisIndex' => 1];//分类2值
+                $chartdata['legend'] = ['去年金额', '今年金额', '去年订单数', '今年订单数']; //分类
+                $chartdata['xAxis'] = $data['day']; //X轴值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][0], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['pre']['price']]; //分类1值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][1], 'type' => 'bar', 'itemStyle' => $series1, 'data' => $data['now']['price']]; //分类1值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][2], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['pre']['count'], 'yAxisIndex' => 1]; //分类2值
+                $chartdata['series'][] = ['name' => $chartdata['legend'][3], 'type' => 'line', 'itemStyle' => $series2, 'data' => $data['now']['count'], 'yAxisIndex' => 1]; //分类2值
                 break;
             default:
                 break;
@@ -1385,21 +1387,21 @@ HTML;
         //日同比
         $sales_today_ratio = $this->countRate($today_sales, $yesterday_sales);
         //周销售额
-//        //本周
-//        $this_week_sales = $this->dao->totalSales('week');
-//        //上周
-//        $last_week_sales = $this->dao->totalSales('last week');
-//        //周同比
-//        $sales_week_ratio = $this->countRate($this_week_sales, $last_week_sales);
+        //        //本周
+        //        $this_week_sales = $this->dao->totalSales('week');
+        //        //上周
+        //        $last_week_sales = $this->dao->totalSales('last week');
+        //        //周同比
+        //        $sales_week_ratio = $this->countRate($this_week_sales, $last_week_sales);
         //总销售额
         $total_sales = $this->dao->totalSales('month');
         $sales = [
             'today' => $today_sales,
             'yesterday' => $yesterday_sales,
             'today_ratio' => $sales_today_ratio,
-//            'week' => $this_week_sales,
-//            'last_week' => $last_week_sales,
-//            'week_ratio' => $sales_week_ratio,
+            //            'week' => $this_week_sales,
+            //            'last_week' => $last_week_sales,
+            //            'week_ratio' => $sales_week_ratio,
             'total' => $total_sales . '元',
             'date' => '今日'
         ];
@@ -1410,21 +1412,21 @@ HTML;
         $yesterday_visits = $productLogServices->count(['time' => 'yesterday', 'type' => 'visit']);
         //日同比
         $visits_today_ratio = $this->countRate($today_visits, $yesterday_visits);
-//        //本周访问量
-//        $this_week_visits = $productLogServices->count(['time' => 'week', 'type' => 'visit']);
-//        //上周访问量
-//        $last_week_visits = $productLogServices->count(['time' => 'last week', 'type' => 'visit']);
-//        //周同比
-//        $visits_week_ratio = $this->countRate($this_week_visits, $last_week_visits);
+        //        //本周访问量
+        //        $this_week_visits = $productLogServices->count(['time' => 'week', 'type' => 'visit']);
+        //        //上周访问量
+        //        $last_week_visits = $productLogServices->count(['time' => 'last week', 'type' => 'visit']);
+        //        //周同比
+        //        $visits_week_ratio = $this->countRate($this_week_visits, $last_week_visits);
         //总访问量
         $total_visits = $productLogServices->count(['time' => 'month', 'type' => 'visit']);
         $visits = [
             'today' => $today_visits,
             'yesterday' => $yesterday_visits,
             'today_ratio' => $visits_today_ratio,
-//            'week' => $this_week_visits,
-//            'last_week' => $last_week_visits,
-//            'week_ratio' => $visits_week_ratio,
+            //            'week' => $this_week_visits,
+            //            'last_week' => $last_week_visits,
+            //            'week_ratio' => $visits_week_ratio,
             'total' => $total_visits . 'Pv',
             'date' => '今日'
         ];
@@ -1435,21 +1437,21 @@ HTML;
         $yesterday_order = $this->dao->totalOrderCount('yesterday');
         //订单日同比
         $order_today_ratio = $this->countRate($today_order, $yesterday_order);
-//        //本周订单量
-//        $this_week_order = $this->dao->totalOrderCount('week');
-//        //上周订单量
-//        $last_week_order = $this->dao->totalOrderCount('last week');
-//        //订单周同比
-//        $order_week_ratio = $this->countRate($this_week_order, $last_week_order);
+        //        //本周订单量
+        //        $this_week_order = $this->dao->totalOrderCount('week');
+        //        //上周订单量
+        //        $last_week_order = $this->dao->totalOrderCount('last week');
+        //        //订单周同比
+        //        $order_week_ratio = $this->countRate($this_week_order, $last_week_order);
         //总订单量
         $total_order = $this->dao->totalOrderCount('month');
         $order = [
             'today' => $today_order,
             'yesterday' => $yesterday_order,
             'today_ratio' => $order_today_ratio,
-//            'week' => $this_week_order,
-//            'last_week' => $last_week_order,
-//            'week_ratio' => $order_week_ratio,
+            //            'week' => $this_week_order,
+            //            'last_week' => $last_week_order,
+            //            'week_ratio' => $order_week_ratio,
             'total' => $total_order . '单',
             'date' => '今日'
         ];
@@ -1460,21 +1462,21 @@ HTML;
         $yesterday_user = $uSercice->totalUserCount('yesterday');
         //新增用户日同比
         $user_today_ratio = $this->countRate($today_user, $yesterday_user);
-//        //本周新增用户
-//        $this_week_user = $uSercice->totalUserCount('week');
-//        //上周新增用户
-//        $last_week_user = $uSercice->totalUserCount('last week');
-//        //新增用户周同比
-//        $user_week_ratio = $this->countRate($this_week_user, $last_week_user);
+        //        //本周新增用户
+        //        $this_week_user = $uSercice->totalUserCount('week');
+        //        //上周新增用户
+        //        $last_week_user = $uSercice->totalUserCount('last week');
+        //        //新增用户周同比
+        //        $user_week_ratio = $this->countRate($this_week_user, $last_week_user);
         //本月新增用户
         $total_user = $uSercice->totalUserCount('month');
         $user = [
             'today' => $today_user,
             'yesterday' => $yesterday_user,
             'today_ratio' => $user_today_ratio,
-//            'week' => $this_week_user,
-//            'last_week' => $last_week_user,
-//            'week_ratio' => $user_week_ratio,
+            //            'week' => $this_week_user,
+            //            'last_week' => $last_week_user,
+            //            'week_ratio' => $user_week_ratio,
             'total' => $total_user . '人',
             'date' => '今日'
         ];
@@ -1539,14 +1541,53 @@ HTML;
         if (!$data['clientId'] || !$data['apiKey'] || !$data['partner'] || !$data['terminal']) {
             throw new ValidateException('请先配置小票打印开发者');
         }
-        $printer = new Printer('yi_lian_yun', $data);
-        $res = $printer->setPrinterContent([
-            'name' => sys_config('site_name'),
-            'orderInfo' => is_object($order) ? $order->toArray() : $order,
-            'product' => $product
-        ])->startPrinter();
-        if (!$res) {
-            throw new ValidateException($printer->getError());
+
+        $terminals = explode(',', $data['terminal'], 3);
+        if (count($terminals) >= 2) {
+            $product0 = [];
+            $product1 = [];
+            foreach ($product as $item) {
+                if (!empty($item['productInfo']['is_kictchen']) && $item['productInfo']['is_kictchen'] == 1) {
+                    $product1[] = $item;
+                } else {
+                    $product0[] = $item;
+                }
+            }
+            if ($product0) {
+                $data['terminal'] = $terminals[0];
+                $printer = new Printer('yi_lian_yun', $data);
+                $res = $printer->setPrinterContent([
+                    'name' => sys_config('site_name'),
+                    'orderInfo' => is_object($order) ? $order->toArray() : $order,
+                    'product' => $product0
+                ])->startPrinter();
+            }
+            if ($product1) {
+                $data['terminal'] = $terminals[1];
+                $printer2 = new Printer('yi_lian_yun', $data);
+                $res2 = $printer2->setPrinterContent([
+                    'name' => sys_config('site_name'),
+                    'orderInfo' => is_object($order) ? $order->toArray() : $order,
+                    'product' => $product1
+                ])->startPrinter();
+            }
+            if (isset($res) && !$res) {
+                throw new ValidateException($printer->getError());
+            }
+            if (isset($res2) && !$res2) {
+                throw new ValidateException($printer2->getError());
+            }
+        } else {
+            $data['terminal'] = $terminals[0];
+            $printer = new Printer('yi_lian_yun', $data);
+            $res = $printer->setPrinterContent([
+                'name' => sys_config('site_name'),
+                'orderInfo' => is_object($order) ? $order->toArray() : $order,
+                'product' => $product
+            ])->startPrinter();
+            if (!$res) {
+                throw new ValidateException($printer->getError());
+            }
         }
         return $res;
     }
@@ -1597,7 +1638,7 @@ HTML;
         $cartServices = app()->make(StoreCartServices::class);
         //获取购物车信息
         $cartGroup = $cartServices->getUserProductCartListV1($uid, $cartId, $new, $addr, $shipping_type, $store_id, $coupon_id, $luckRecordId);
-        $storeFreePostage = floatval(sys_config('store_free_postage')) ?: 0;//满额包邮金额
+        $storeFreePostage = floatval(sys_config('store_free_postage')) ?: 0; //满额包邮金额
         $data['storeFreePostage'] = $storeFreePostage;
         $validCartInfo = $cartGroup['valid'];
         $giveCartList = $cartGroup['giveCartList'] ?? [];
@@ -1633,12 +1674,12 @@ HTML;
         // $data['giveCartInfo'] = $giveCartList;
         $data['custom_form'] = [];
         if (isset($cartGroup['cartInfo'][0]['productInfo']['system_form_id']) && $cartGroup['cartInfo'][0]['productInfo']['system_form_id']) {
-			/** @var SystemFormServices $systemFormServices */
-			$systemFormServices = app()->make(SystemFormServices::class);
-			$formInfo = $systemFormServices->value(['id' => $cartGroup['cartInfo'][0]['productInfo']['system_form_id']], 'value');
-			if ($formInfo) {
-				$data['custom_form'] = is_string($formInfo) ? json_decode($formInfo, true) : $formInfo;
-			}
+            /** @var SystemFormServices $systemFormServices */
+            $systemFormServices = app()->make(SystemFormServices::class);
+            $formInfo = $systemFormServices->value(['id' => $cartGroup['cartInfo'][0]['productInfo']['system_form_id']], 'value');
+            if ($formInfo) {
+                $data['custom_form'] = is_string($formInfo) ? json_decode($formInfo, true) : $formInfo;
+            }
         }
         $data['give_integral'] = $other['give_integral'];
         $data['give_coupon'] = [];
@@ -1669,11 +1710,11 @@ HTML;
         $data['userInfo'] = $user;
         $data['integralRatio'] = $other['integralRatio'];
         $data['offline_pay_status'] = (int)sys_config('offline_pay_status') ?? (int)2;
-        $data['yue_pay_status'] = (int)sys_config('balance_func_status') && (int)sys_config('yue_pay_status') == 1 ? (int)1 : (int)2;//余额支付 1 开启 2 关闭
-        $data['pay_weixin_open'] = (int)sys_config('pay_weixin_open') ?? 0;//微信支付 1 开启 0 关闭
-        $data['store_func_status'] = (int)(sys_config('store_func_status', 1));//门店是否开启
-        $data['store_self_mention'] = false;//门店自提
-        $data['store_delivery_status'] = false;//门店配送
+        $data['yue_pay_status'] = (int)sys_config('balance_func_status') && (int)sys_config('yue_pay_status') == 1 ? (int)1 : (int)2; //余额支付 1 开启 2 关闭
+        $data['pay_weixin_open'] = (int)sys_config('pay_weixin_open') ?? 0; //微信支付 1 开启 0 关闭
+        $data['store_func_status'] = (int)(sys_config('store_func_status', 1)); //门店是否开启
+        $data['store_self_mention'] = false; //门店自提
+        $data['store_delivery_status'] = false; //门店配送
         if ($data['store_func_status']) {
             //门店自提是否开启
             /** @var SystemStoreServices $systemStoreServices */
@@ -1682,8 +1723,8 @@ HTML;
             $data['store_delivery_status'] = !!$systemStoreServices->count(['type' => 0]);
         }
         $data['store_func_status'] = $data['store_func_status'] && ($data['store_self_mention'] || $data['store_delivery_status']);
-        $data['ali_pay_status'] = (bool)sys_config('ali_pay_status');//支付包支付 1 开启 0 关闭
-        $data['system_store'] = [];//门店信息
+        $data['ali_pay_status'] = (bool)sys_config('ali_pay_status'); //支付包支付 1 开启 0 关闭
+        $data['system_store'] = []; //门店信息
         /** @var UserInvoiceServices $userInvoice */
         $userInvoice = app()->make(UserInvoiceServices::class);
         $invoice_func = $userInvoice->invoiceFuncStatus();
@@ -1985,9 +2026,9 @@ HTML;
         }
         $list = $this->dao->search($where)->with($with)->page($page, $limit)->order('id asc')->select()->toArray();
         if ($list) {
-			/** @var  $userServices */
-			$userServices = app()->make(UserServices::class);
-			$userSex = $userServices->getColumn([['uid', 'IN', array_unique(array_column($list, 'uid'))]], 'uid,sex', 'uid');
+            /** @var  $userServices */
+            $userServices = app()->make(UserServices::class);
+            $userSex = $userServices->getColumn([['uid', 'IN', array_unique(array_column($list, 'uid'))]], 'uid,sex', 'uid');
             foreach ($list as &$item) {
                 /** @var StoreOrderCartInfoServices $orderCart */
                 $orderCart = app()->make(StoreOrderCartInfoServices::class);
@@ -2001,7 +2042,7 @@ HTML;
                 $item['_info'] = $_info;
                 $item['sex'] = $userSex[$item['uid']]['sex'] ?? '';
                 switch ($item['type']) {
-                    case 0://普通订单
+                    case 0: //普通订单
                         if ($item['shipping_type'] == 1) {
                             $item['pink_name'] = '[普通订单]';
                             $item['color'] = '#895612';
@@ -2010,15 +2051,15 @@ HTML;
                             $item['color'] = '#8956E8';
                         }
                         break;
-                    case 1://秒杀
+                    case 1: //秒杀
                         $item['pink_name'] = '[秒杀订单]';
                         $item['color'] = '#32c5e9';
                         break;
-                    case 2://砍价
+                    case 2: //砍价
                         $item['pink_name'] = '[砍价订单]';
                         $item['color'] = '#12c5e9';
                         break;
-                    case 3://拼团
+                    case 3: //拼团
                         /** @var StorePinkServices $pinkService */
                         $pinkService = app()->make(StorePinkServices::class);
                         $pinkStatus = $pinkService->value(['order_id_key' => $item['id']], 'status');
@@ -2041,7 +2082,7 @@ HTML;
                                 break;
                         }
                         break;
-                    case 5://套餐
+                    case 5: //套餐
                         $item['pink_name'] = '[优惠套餐]';
                         $item['color'] = '#12c5e9';
                         break;
@@ -2150,9 +2191,9 @@ HTML;
     {
 
         switch ($selectType) {
-            case "sum" :
+            case "sum":
                 return $this->dao->getDayTotalMoney($where, $sum_field);
-            case "group" :
+            case "group":
                 return $this->dao->getDayGroupMoney($where, $sum_field, $group);
         }
     }
@@ -2360,7 +2401,7 @@ HTML;
         /** @var StoreCartServices $cartServices */
         $cartServices = app()->make(StoreCartServices::class);
         $cartGroup = $cartServices->getUserProductCartListV1($uid, $cartId, true, $addr);
-        $storeFreePostage = floatval(sys_config('store_free_postage')) ?: 0;//满额包邮金额
+        $storeFreePostage = floatval(sys_config('store_free_postage')) ?: 0; //满额包邮金额
         $validCartInfo = $cartGroup['valid'];
         /** @var StoreOrderComputedServices $computedServices */
         $computedServices = app()->make(StoreOrderComputedServices::class);
@@ -2450,9 +2491,9 @@ HTML;
         if (!$order) throw new ValidateException('订单不存在');
         $order = $order->toArray();
         $order = $this->tidyOrder($order, true);
-        $order['yue_pay_status'] = (int)sys_config('balance_func_status') && (int)sys_config('yue_pay_status') == 1 ? (int)1 : (int)2;//余额支付 1 开启 2 关闭
-        $order['pay_weixin_open'] = (int)sys_config('pay_weixin_open') ?? 0;//微信支付 1 开启 0 关闭
-        $order['ali_pay_status'] = (bool)sys_config('ali_pay_status');//支付包支付 1 开启 0 关闭
+        $order['yue_pay_status'] = (int)sys_config('balance_func_status') && (int)sys_config('yue_pay_status') == 1 ? (int)1 : (int)2; //余额支付 1 开启 2 关闭
+        $order['pay_weixin_open'] = (int)sys_config('pay_weixin_open') ?? 0; //微信支付 1 开启 0 关闭
+        $order['ali_pay_status'] = (bool)sys_config('ali_pay_status'); //支付包支付 1 开启 0 关闭
         return $order;
     }
 
@@ -2497,16 +2538,16 @@ HTML;
         $storeProductIds = [];
         foreach ($cart_info as $cart) {
             $productInfo = $cart['productInfo'] ?? [];
-            if (isset($productInfo['store_delivery']) && !$productInfo['store_delivery']) {//有商品不支持门店配送
+            if (isset($productInfo['store_delivery']) && !$productInfo['store_delivery']) { //有商品不支持门店配送
                 return [[], $cart_info];
             }
             switch ($productInfo['type'] ?? 0) {
-                case 0://平台
-                case 2://供应商
+                case 0: //平台
+                case 2: //供应商
                     $platProductIds[] = $cart['product_id'];
                     break;
-                case 1://门店
-                    if ($productInfo['pid']) {//门店自有商品
+                case 1: //门店
+                    if ($productInfo['pid']) { //门店自有商品
                         $storeProductIds[] = $cart['product_id'];
                     } else {
                         $platStoreProductIds[] = $cart['product_id'];
@@ -2532,7 +2573,7 @@ HTML;
         /** @var StoreProductAttrValueServices $skuValueServices */
         $skuValueServices = app()->make(StoreProductAttrValueServices::class);
         foreach ($cart_info as $cart) {
-            if (isset($cart['productInfo']['store_delivery']) && !$cart['productInfo']['store_delivery']) {//有商品不支持门店配送
+            if (isset($cart['productInfo']['store_delivery']) && !$cart['productInfo']['store_delivery']) { //有商品不支持门店配送
                 throw new ValidateException('有商品不支持门店配送');
             }
             switch ($cart['type']) {
@@ -2560,7 +2601,7 @@ HTML;
         }
         $res = $this->transaction(function () use ($id, $store_id, $orderInfo, $storeInfo, $cart_info, $branchProductServics) {
 
-            if ($orderInfo['store_id'] > 0) {//重新分配门店
+            if ($orderInfo['store_id'] > 0) { //重新分配门店
                 //返还原来门店库存
                 $res = $branchProductServics->regressionBranchProductStock($orderInfo, $cart_info, -1, 0);
             } else {
@@ -2679,18 +2720,18 @@ HTML;
         $store_id = [];
         //delivery_type :1、快递，2、到店自提，3、门店配送
         foreach ($cartInfo as $item) {
-			$delivery_type = is_string($item['productInfo']['delivery_type']) ? explode(',', $item['productInfo']['delivery_type']) : $item['productInfo']['delivery_type'];
-			if (in_array(1, $delivery_type)) {//支持平台配送 验证平台该商品
-				$productInfo = $item['productInfo'] ?? [];
-				if ($productInfo && isset($productInfo['type']) && $productInfo['type'] == 1 && isset($productInfo['pid']) && $productInfo['pid']) {
-					/** @var StoreProductServices $productServices */
-					$productServices = app()->make(StoreProductServices::class);
-					$platInfo = $productServices->getCacheProductInfo((int)$productInfo['pid']);
-					if (!$platInfo || $platInfo['stock'] <= 0) {
-						unset($delivery_type[array_search('1', $delivery_type)]);
-					}
-				}
-			}
+            $delivery_type = is_string($item['productInfo']['delivery_type']) ? explode(',', $item['productInfo']['delivery_type']) : $item['productInfo']['delivery_type'];
+            if (in_array(1, $delivery_type)) { //支持平台配送 验证平台该商品
+                $productInfo = $item['productInfo'] ?? [];
+                if ($productInfo && isset($productInfo['type']) && $productInfo['type'] == 1 && isset($productInfo['pid']) && $productInfo['pid']) {
+                    /** @var StoreProductServices $productServices */
+                    $productServices = app()->make(StoreProductServices::class);
+                    $platInfo = $productServices->getCacheProductInfo((int)$productInfo['pid']);
+                    if (!$platInfo || $platInfo['stock'] <= 0) {
+                        unset($delivery_type[array_search('1', $delivery_type)]);
+                    }
+                }
+            }
             $arr = array_merge($arr, $delivery_type);
             if (isset($item['productInfo']['type']) && isset($item['productInfo']['relation_id']) && $item['productInfo']['type'] == 1 && $item['productInfo']['relation_id']) {
                 $store_id[] = $item['productInfo']['relation_id'];
@@ -2722,5 +2763,4 @@ HTML;
         $arr = array_merge(array_unique($arr));
         return ['type' => $arr];
     }
-
 }

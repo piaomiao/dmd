@@ -15,9 +15,14 @@ namespace app\services\order;
 use app\dao\order\StoreOrderDao;
 use app\jobs\order\AutoTakeOrderJob;
 use app\jobs\notice\SmsAdminJob;
+use app\model\order\StoreOrderCartInfo;
+use app\model\store\SystemStoreShare;
+use app\model\user\User;
 use app\services\BaseServices;
 use app\services\message\service\StoreServiceServices;
 use app\services\message\sms\SmsSendServices;
+use app\services\store\SystemStoreServices;
+use app\services\store\SystemStoreShareServices;
 use app\services\user\member\MemberCardServices;
 use app\services\user\UserBillServices;
 use app\services\user\UserBrokerageServices;
@@ -74,11 +79,11 @@ class StoreOrderTakeServices extends BaseServices
         /** @var StoreOrderStatusServices $statusService */
         $statusService = app()->make(StoreOrderStatusServices::class);
         $res = $order->save() && $statusService->save([
-                'oid' => $order['id'],
-                'change_type' => 'user_take_delivery',
-                'change_message' => '用户已收货',
-                'change_time' => time()
-            ]);
+            'oid' => $order['id'],
+            'change_type' => 'user_take_delivery',
+            'change_message' => '用户已收货',
+            'change_time' => time()
+        ]);
         $res = $res && $this->storeProductOrderUserTakeDelivery($order);
         if (!$res) {
             throw new ValidateException('收货失败');
@@ -117,9 +122,13 @@ class StoreOrderTakeServices extends BaseServices
                 $res1 = $this->gainUserIntegral($order, $userInfo, $storeTitle);
                 //返佣
                 $res2 = $this->backOrderBrokerage($order, $userInfo);
+                //分成
+                $res4 = $this->backOrderDivide($order);
                 //经验
                 $res3 = $this->gainUserExp($order, $userInfo);
-                if (!($res1 && $res2 && $res3)) {
+                //成为股东
+                $res5 = $this->checkShareHolder($order, $userInfo);
+                if (!($res1 && $res2 && $res3 && $res4 && $res5)) {
                     throw new ValidateException('收货失败!');
                 }
                 return true;
@@ -132,6 +141,88 @@ class StoreOrderTakeServices extends BaseServices
         } else {
             return false;
         }
+    }
+
+    public function checkShareHolder($orderInfo, $userInfo)
+    {
+        if ($orderInfo['store_id'] == 0) {
+            return true;
+        }
+        $store = app()->make(SystemStoreServices::class)->getStoreInfo($orderInfo['store_id']);
+        if (empty($store) || !$store['open_share'] || !$store['share_product_id']) {
+            return true;
+        }
+        $num = (int)StoreOrderCartInfo::whereIn('cart_id', $orderInfo['cart_id'])->where('product_id', $store['share_product_id'])->value('cart_num');
+        if ($num) {
+            $res = app()->make(SystemStoreShareServices::class)->save([
+                'uid' => $userInfo['uid'],
+                'order_id' => $orderInfo['id'],
+                'number' => $num,
+                'number2' => $num,
+                'add_time' => time(),
+                'store_id' => $orderInfo['store_id'],
+                'share_name' => $userInfo['nickname'],
+                'phone' => $userInfo['phone'],
+            ]);
+            if (!$res) {
+                return false;
+            }
+            if ($userInfo['is_shareholder'] == 0) {
+                User::where('uid', $userInfo['uid'])->save(['is_shareholder' => 1]);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 股东分成
+     *
+     * @param [type] $order
+     * @return void
+     */
+    public function backOrderDivide($orderInfo)
+    {
+        if (!$orderInfo || $orderInfo['store_id'] == 0 || $orderInfo['divide'] == 0 || !sys_config('brokerage_func_status2')) {
+            return true;
+        }
+        $services = app()->make(SystemStoreShareServices::class);
+        $number = $services->getActiveShareholderTotal($orderInfo['store_id']);
+        if ($number == 0) {
+            return true;
+        }
+        //冻结时间
+        $broken_time = intval(sys_config('extract_time2'));
+        $frozen_time = time() + $broken_time * 86400;
+        /** @var UserServices $userServices */
+        $userServices = app()->make(UserServices::class);
+        // 添加佣金记录
+        /** @var UserBrokerageServices $userBrokerageServices */
+        $userBrokerageServices = app()->make(UserBrokerageServices::class);
+        $list = $services->getActiveShareholders($orderInfo['store_id']);
+        foreach ($list as $v) {
+            // 获取上级推广员信息
+            $spreadPrice = $userServices->value(['uid' => $v['uid']], 'divide_price');
+            $brokeragePrice = bcdiv((string)bcmul($orderInfo['divide'], $v['number'], 2), $number, 4);
+            // 分成之后的金额
+            $balance = bcadd($spreadPrice, $brokeragePrice, 4);
+            //分成
+            $res1 = $userBrokerageServices->income('get_divide', $v['uid'], [
+                'nickname' => '',
+                'pay_price' => floatval($orderInfo['pay_price']),
+                'number' => floatval($brokeragePrice),
+                'frozen_time' => $frozen_time
+            ], $balance, $orderInfo['id'], $orderInfo['store_id']);
+            // 添加用户分成
+            $res2 = $userServices->bcInc($v['uid'], 'divide_price', $brokeragePrice, 'uid');
+            //给上级发送获得佣金的模板消息
+            // $this->sendBackOrderBrokerage($orderInfo, $v['uid'], $brokeragePrice);
+            // 一级返佣成功 跳转二级返佣
+            $res = $res1 && $res2;
+            if (!$res) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -215,7 +306,7 @@ class StoreOrderTakeServices extends BaseServices
         }
         //是否开启自购返佣
         $isSelfBrokerage = sys_config('is_self_brokerage', 0);
-        if (!isset($orderInfo['spread_uid']) || !$orderInfo['spread_uid']) {//兼容之前订单表没有spread_uid情况
+        if (!isset($orderInfo['spread_uid']) || !$orderInfo['spread_uid']) { //兼容之前订单表没有spread_uid情况
             //没开启自购返佣 没有上级 或者 当用用户上级时自己  直接返回
             if (!$isSelfBrokerage && (!$userInfo['spread_uid'] || $userInfo['spread_uid'] == $orderInfo['uid'])) {
                 return true;
@@ -232,7 +323,7 @@ class StoreOrderTakeServices extends BaseServices
         //检测是否是分销员
         /** @var UserServices $userServices */
         $userServices = app()->make(UserServices::class);
-        if (!$userServices->checkUserPromoter($one_spread_uid)) {//一级不是分销员 直接二级返佣
+        if (!$userServices->checkUserPromoter($one_spread_uid)) { //一级不是分销员 直接二级返佣
             return $this->backOrderBrokerageTwo($orderInfo, $userInfo, $isSelfBrokerage, $frozen_time);
         }
         //订单中取出
@@ -479,11 +570,11 @@ class StoreOrderTakeServices extends BaseServices
                 /** @var StoreOrderStatusServices $statusService */
                 $statusService = app()->make(StoreOrderStatusServices::class);
                 $res = $this->dao->update($order['id'], $data) && $statusService->save([
-                        'oid' => $order['id'],
-                        'change_type' => 'take_delivery',
-                        'change_message' => '已收货[自动收货]',
-                        'change_time' => time()
-                    ]);
+                    'oid' => $order['id'],
+                    'change_type' => 'take_delivery',
+                    'change_message' => '已收货[自动收货]',
+                    'change_time' => time()
+                ]);
                 $res = $res && $this->storeProductOrderUserTakeDelivery($order);
                 if (!$res) {
                     throw new ValidateException('订单号' . $order['order_id'] . '自动收货失败');
@@ -524,4 +615,5 @@ class StoreOrderTakeServices extends BaseServices
         }
         return $this->runAutoTakeOrder($where);
     }
+
 }

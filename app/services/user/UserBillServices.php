@@ -553,7 +553,7 @@ class UserBillServices extends BaseServices
 
     /**
      * @param $uid
-     * @param $type
+     * @param $type 0 全部  1 消费  2 充值  3 返佣  4 提现  5 股东分成
      * @return array
      */
     public function getUserBillList(int $uid, int $type)
@@ -563,7 +563,7 @@ class UserBillServices extends BaseServices
         $where['category'] = 'now_money';
         switch ((int)$type) {
             case 0:
-                $where['type'] = ['recharge', 'pay_money', 'system_add', 'pay_product_refund', 'system_sub', 'pay_member', 'offline_scan', 'lottery_use', 'lottery_add'];
+                $where['type'] = ['recharge', 'pay_money', 'system_add', 'pay_product_refund', 'system_sub', 'pay_member', 'offline_scan', 'lottery_use', 'lottery_add', 'divide'];
                 break;
             case 1:
                 $where['type'] = ['pay_money', 'pay_member', 'offline_scan', 'user_recharge_refund', 'lottery_use'];
@@ -576,6 +576,9 @@ class UserBillServices extends BaseServices
                 break;
             case 4:
                 $where['type'] = ['extract'];
+                break;
+            case 5:
+                $where['type'] = ['divide'];
                 break;
         }
         $field = 'FROM_UNIXTIME(add_time,"%Y-%m") as time,group_concat(id SEPARATOR ",") ids';

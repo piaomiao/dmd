@@ -13,6 +13,7 @@ namespace app\model\user;
 
 use app\model\agent\AgentLevel;
 use app\model\order\StoreOrder;
+use app\model\store\SystemStoreShare;
 use app\model\user\level\SystemUserLevel;
 use app\model\user\group\UserGroup;
 use app\model\user\label\UserLabel;
@@ -211,6 +212,11 @@ class User extends BaseModel
     public function extract()
     {
         return $this->hasMany(UserExtract::class, 'uid', 'uid');
+    }
+
+    public function share()
+    {
+        return $this->hasMany(SystemStoreShare::class, 'uid', 'uid');
     }
 
     /**

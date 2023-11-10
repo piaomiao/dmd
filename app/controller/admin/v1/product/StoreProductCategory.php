@@ -115,7 +115,8 @@ class StoreProductCategory extends AuthController
             ['pic', ''],
             ['big_pic', ''],
             ['sort', 0],
-            ['is_show', 0]
+            ['is_show', 0],
+            ['is_online', 0]
         ]);
         if (!$data['cate_name']) {
             return $this->fail('请输入分类名称');
@@ -150,7 +151,8 @@ class StoreProductCategory extends AuthController
             ['pic', ''],
             ['big_pic', ''],
             ['sort', 0],
-            ['is_show', 0]
+            ['is_show', 0],
+            ['is_online', 0]
         ]);
         if (!$data['cate_name']) {
             return $this->fail('请输入分类名称');

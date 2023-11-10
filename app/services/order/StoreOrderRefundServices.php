@@ -472,6 +472,9 @@ class StoreOrderRefundServices extends BaseServices
             if (!$userBrokerageServices->orderRefundBrokerageBack($order)) {
                 throw new ValidateException('回退佣金失败');
             }
+            if (!$userBrokerageServices->orderRefundDivideBack($order)) {
+                throw new ValidateException('回退股东分成失败');
+            }
             //回退库存
             if ($order['status'] == 0) {
                 /** @var StoreOrderStatusServices $services */
